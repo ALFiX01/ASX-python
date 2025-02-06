@@ -130,7 +130,9 @@ class TweaksTab:
             else:
                 self.power_switch.deselect()
                 self.power_status.configure(text="ВЫКЛЮЧЕНО", text_color="red")
-        self.update_status()
+        else:
+            self.power_status.configure(text="ВЫКЛЮЧЕНО", text_color="red")
+            self.update_status()
 
     def toggle_visual_effects(self):
         """Toggle visual effects optimization"""
@@ -141,4 +143,6 @@ class TweaksTab:
             else:
                 self.visual_switch.deselect()
                 self.visual_status.configure(text="ВЫКЛЮЧЕНО", text_color="red")
-        self.update_status()
+        else:
+            self.visual_status.configure(text="ВЫКЛЮЧЕНО", text_color="red")
+            self.update_status()
