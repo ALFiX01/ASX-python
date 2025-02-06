@@ -1,6 +1,7 @@
 import os
 import platform
 import subprocess
+import requests  # Добавляем импорт библиотеки requests для скачивания файлов
 from utils.registry_handler import RegistryHandler
 
 # Импортируем winreg только на Windows
@@ -65,19 +66,31 @@ class SystemTweaks:
             subprocess.run(['powercfg', '-restoredefaultschemes'], check=True)
 
             # Remove existing ASX plan if it exists
-            subprocess.run(['powercfg', '/d', SystemTweaks.ASX_POWER_PLAN_GUID], 
+            subprocess.run(['powercfg', '/d', SystemTweaks.ASX_POWER_PLAN_GUID],
                          capture_output=True)  # Ignore errors if plan doesn't exist
 
-            # Import ASX power plan
-            # Note: In real implementation, you'll need to have the .pow file in your resources
-            # and properly handle its path
-            pow_file = os.path.join("resources", "ASX_Hub-Power.pow")
-            if os.path.exists(pow_file):
-                subprocess.run(['powercfg', '-import', pow_file, 
+            # Скачиваем файл .pow
+            download_url = "https://github.com/ALFiX01/ASX-Hub/releases/download/File/ASX.Hub-Power.pow"
+            temp_pow_file = os.path.join(os.environ['TEMP'], "ASX Hub-Power.pow")
+
+            try:
+                response = requests.get(download_url, stream=True)
+                response.raise_for_status()  # Проверка на ошибки HTTP
+                with open(temp_pow_file, 'wb') as file:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        file.write(chunk)
+                print(f"Файл power plan успешно скачан в: {temp_pow_file}")
+            except requests.exceptions.RequestException as e:
+                print(f"Ошибка при скачивании файла power plan: {e}")
+                return False
+
+            # Import ASX power plan из скачанного файла
+            if os.path.exists(temp_pow_file):
+                subprocess.run(['powercfg', '-import', temp_pow_file,
                               SystemTweaks.ASX_POWER_PLAN_GUID], check=True)
 
                 # Set ASX plan as active
-                subprocess.run(['powercfg', '-SETACTIVE', 
+                subprocess.run(['powercfg', '-SETACTIVE',
                               SystemTweaks.ASX_POWER_PLAN_GUID], check=True)
 
                 # Set plan name and description
@@ -89,7 +102,9 @@ class SystemTweaks:
                     subprocess.run(['powercfg', '/d', guid], capture_output=True)
 
                 return True
-            return False
+            else:
+                print(f"Файл power plan не найден после скачивания: {temp_pow_file}")
+                return False
 
         except Exception as e:
             print(f"Error optimizing power plan: {str(e)}")
@@ -125,7 +140,7 @@ class SystemTweaks:
         # Set GameDVR_Enabled
         try:
             if SystemTweaks.is_windows():
-                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore", 0, 
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore", 0,
                                     winreg.KEY_WRITE)
                 winreg.SetValueEx(key, "GameDVR_Enabled", 0, winreg.REG_DWORD, 1)
                 winreg.CloseKey(key)
