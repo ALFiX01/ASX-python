@@ -8,6 +8,17 @@ if platform.system() == "Windows":
     import winreg
 
 class SystemTweaks:
+    # GUID для плана электропитания ASX Hub
+    ASX_POWER_PLAN_GUID = "44444444-4444-4444-4444-444444444449"
+
+    # Список GUID стандартных планов электропитания
+    DEFAULT_POWER_PLANS = [
+        "381b4222-f694-41f0-9685-ff5bb260df2e",  # Сбалансированный
+        "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",  # Высокая производительность
+        "a1841308-3541-4fab-bc81-f71556f20b4a",  # Экономия энергии
+        "a9758bf0-cfc6-439c-a392-7783990ff716"   # Максимальная производительность
+    ]
+
     @staticmethod
     def is_windows():
         return platform.system() == "Windows"
@@ -44,16 +55,55 @@ class SystemTweaks:
 
     @staticmethod
     def optimize_power_plan():
-        """Set high performance power plan"""
+        """Set ASX Hub power plan"""
         if not SystemTweaks.is_windows():
             print("Power plan optimization is only available on Windows")
             return False
 
         try:
-            subprocess.run(['powercfg', '/setactive', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c'])
-            # Rename the plan to include ASX
-            subprocess.run(['powercfg', '/changename', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', 
-                          'ASX High Performance', 'Оптимизированный план электропитания ASX Hub'])
+            # Restore default schemes first
+            subprocess.run(['powercfg', '-restoredefaultschemes'], check=True)
+
+            # Remove existing ASX plan if it exists
+            subprocess.run(['powercfg', '/d', SystemTweaks.ASX_POWER_PLAN_GUID], 
+                         capture_output=True)  # Ignore errors if plan doesn't exist
+
+            # Import ASX power plan
+            # Note: In real implementation, you'll need to have the .pow file in your resources
+            # and properly handle its path
+            pow_file = os.path.join("resources", "ASX_Hub-Power.pow")
+            if os.path.exists(pow_file):
+                subprocess.run(['powercfg', '-import', pow_file, 
+                              SystemTweaks.ASX_POWER_PLAN_GUID], check=True)
+
+                # Set ASX plan as active
+                subprocess.run(['powercfg', '-SETACTIVE', 
+                              SystemTweaks.ASX_POWER_PLAN_GUID], check=True)
+
+                # Set plan name and description
+                subprocess.run(['powercfg', '/changename', SystemTweaks.ASX_POWER_PLAN_GUID,
+                              "ASX Hub-Power", "Больше FPS и меньше задержки."], check=True)
+
+                # Remove other power plans
+                for guid in SystemTweaks.DEFAULT_POWER_PLANS:
+                    subprocess.run(['powercfg', '/d', guid], capture_output=True)
+
+                return True
+            return False
+
+        except Exception as e:
+            print(f"Error optimizing power plan: {str(e)}")
+            return False
+
+    @staticmethod
+    def restore_default_power_plan():
+        """Restore default power plans"""
+        if not SystemTweaks.is_windows():
+            return False
+
+        try:
+            # Restore default schemes
+            subprocess.run(['powercfg', '-restoredefaultschemes'], check=True)
             return True
         except Exception:
             return False

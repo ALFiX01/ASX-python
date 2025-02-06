@@ -49,8 +49,24 @@ class TweaksTab:
         power_frame = ctk.CTkFrame(frame)
         power_frame.pack(fill="x", padx=10, pady=5)
 
-        power_label = ctk.CTkLabel(power_frame, text="План электропитания ASX Hub")
-        power_label.pack(side="left", padx=5)
+        # Create text frame for title and description
+        power_text_frame = ctk.CTkFrame(power_frame, fg_color="transparent")
+        power_text_frame.pack(side="left", fill="x", expand=True, padx=5)
+
+        power_label = ctk.CTkLabel(
+            power_text_frame,
+            text="План электропитания ASX Hub",
+            font=("Arial", 14, "bold")
+        )
+        power_label.pack(anchor="w")
+
+        power_desc = ctk.CTkLabel(
+            power_text_frame,
+            text="Оптимизированный план электропитания для максимальной производительности.\nУменьшает задержки и увеличивает FPS в играх.",
+            font=("Arial", 12),
+            justify="left"
+        )
+        power_desc.pack(anchor="w")
 
         self.power_switch = ctk.CTkSwitch(
             power_frame,
@@ -61,10 +77,26 @@ class TweaksTab:
 
         # Visual Effects Optimization
         visual_frame = ctk.CTkFrame(frame)
-        visual_frame.pack(fill="x", padx=10, pady=5)
+        visual_frame.pack(fill="x", padx=10, pady=(15, 5))
 
-        visual_label = ctk.CTkLabel(visual_frame, text="FSO и GameBar")
-        visual_label.pack(side="left", padx=5)
+        # Create text frame for title and description
+        visual_text_frame = ctk.CTkFrame(visual_frame, fg_color="transparent")
+        visual_text_frame.pack(side="left", fill="x", expand=True, padx=5)
+
+        visual_label = ctk.CTkLabel(
+            visual_text_frame,
+            text="FSO и GameBar",
+            font=("Arial", 14, "bold")
+        )
+        visual_label.pack(anchor="w")
+
+        visual_desc = ctk.CTkLabel(
+            visual_text_frame,
+            text="Оптимизация игровых настроек Windows для лучшей производительности.\nОтключает ненужные визуальные эффекты и игровую панель Windows.",
+            font=("Arial", 12),
+            justify="left"
+        )
+        visual_desc.pack(anchor="w")
 
         self.visual_switch = ctk.CTkSwitch(
             visual_frame,
