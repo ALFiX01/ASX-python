@@ -12,6 +12,9 @@ except ImportError:
 from gui.tab_tweaks import TweaksTab
 from gui.tab_programs import ProgramsTab
 from gui.tab_utilities import UtilitiesTab
+from gui.tab_WebResources import WebResourcesTab
+from gui.tab_information import InformationTab
+from gui.tab_settings import SettingsTab
 
 APP_VERSION = "1.0.0"
 
@@ -29,8 +32,8 @@ class ASXHub(ctk.CTk):
 
         # Configure window
         self.title(f"ASX Hub v{APP_VERSION}")
-        self.geometry("900x600")
-        self.minsize(800, 500)
+        self.geometry("1050x800")
+        self.minsize(1050, 750)
 
         # Set theme
         ctk.set_appearance_mode("dark")
@@ -56,6 +59,9 @@ class ASXHub(ctk.CTk):
         self.tweaks_tab = TweaksTab(self.tab_tweaks)
         self.programs_tab = ProgramsTab(self.tab_programs)
         self.utilities_tab = UtilitiesTab(self.tab_utilities)
+        self.web_resources_tab = WebResourcesTab(self.tab_web)
+        self.information_tab = InformationTab(self.tab_info)
+        self.settings_tab = SettingsTab(self.tab_settings)
 
         # Create status bar
         self.status_bar = ctk.CTkFrame(self.main_container, height=30)
