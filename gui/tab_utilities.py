@@ -137,9 +137,8 @@ class UtilitiesTab:
 
     def show_message(self, message):
         """Show a message dialog"""
-        dialog = ctk.CTkDialog(
-            self.parent,
+        messagebox = ctk.CTkInputDialog(
             title="Сообщение",
             text=message
         )
-        dialog.show()
+        messagebox.get_input()  # Show dialog and wait for user input

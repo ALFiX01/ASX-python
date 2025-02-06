@@ -139,6 +139,10 @@ class TweaksTab:
             success = self.system_tweaks.optimize_power_plan()
             if not success:
                 self.power_switch.deselect()
+        else:
+            success = self.system_tweaks.restore_default_power_plan()
+            if not success:
+                self.power_switch.select()
 
     def toggle_visual_effects(self):
         """Toggle visual effects optimization"""
