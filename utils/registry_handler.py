@@ -1,6 +1,10 @@
 import os
 import platform
 
+# Import winreg only on Windows
+if platform.system() == "Windows":
+    import winreg
+
 class RegistryHandler:
     @staticmethod
     def is_windows():
@@ -14,10 +18,10 @@ class RegistryHandler:
             return False
 
         try:
-            import winreg
-            reg_key = winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_WRITE)
-            winreg.SetValueEx(reg_key, value_name, 0, value_type or winreg.REG_DWORD, value_data)
-            winreg.CloseKey(reg_key)
+            if platform.system() == "Windows":
+                reg_key = winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_WRITE)
+                winreg.SetValueEx(reg_key, value_name, 0, value_type or winreg.REG_DWORD, value_data)
+                winreg.CloseKey(reg_key)
             return True
         except Exception as e:
             print(f"Error setting registry value: {str(e)}")
@@ -31,11 +35,12 @@ class RegistryHandler:
             return None
 
         try:
-            import winreg
-            reg_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
-            value, value_type = winreg.QueryValueEx(reg_key, value_name)
-            winreg.CloseKey(reg_key)
-            return value
+            if platform.system() == "Windows":
+                reg_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
+                value, value_type = winreg.QueryValueEx(reg_key, value_name)
+                winreg.CloseKey(reg_key)
+                return value
+            return None
         except Exception as e:
             print(f"Error getting registry value: {str(e)}")
             return None
@@ -48,10 +53,10 @@ class RegistryHandler:
             return False
 
         try:
-            import winreg
-            reg_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_WRITE)
-            winreg.DeleteValue(reg_key, value_name)
-            winreg.CloseKey(reg_key)
+            if platform.system() == "Windows":
+                reg_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_WRITE)
+                winreg.DeleteValue(reg_key, value_name)
+                winreg.CloseKey(reg_key)
             return True
         except Exception as e:
             print(f"Error deleting registry value: {str(e)}")

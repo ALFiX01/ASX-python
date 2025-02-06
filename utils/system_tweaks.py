@@ -1,8 +1,11 @@
 import os
 import platform
 import subprocess
-import winreg
 from utils.registry_handler import RegistryHandler
+
+# Импортируем winreg только на Windows
+if platform.system() == "Windows":
+    import winreg
 
 class SystemTweaks:
     @staticmethod
@@ -29,6 +32,8 @@ class SystemTweaks:
             return False
 
         try:
+            if not hasattr(SystemTweaks, '_winreg'):
+                return False
             # Open the registry key
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore", 0, winreg.KEY_READ)
             value, _ = winreg.QueryValueEx(key, "GameDVR_Enabled")
@@ -69,10 +74,11 @@ class SystemTweaks:
 
         # Set GameDVR_Enabled
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore", 0, 
-                                winreg.KEY_WRITE)
-            winreg.SetValueEx(key, "GameDVR_Enabled", 0, winreg.REG_DWORD, 1)
-            winreg.CloseKey(key)
+            if SystemTweaks.is_windows():
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore", 0, 
+                                    winreg.KEY_WRITE)
+                winreg.SetValueEx(key, "GameDVR_Enabled", 0, winreg.REG_DWORD, 1)
+                winreg.CloseKey(key)
             return success
         except Exception:
             return False
