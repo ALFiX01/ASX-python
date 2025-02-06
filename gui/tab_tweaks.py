@@ -49,7 +49,16 @@ class TweaksTab:
         power_frame = ctk.CTkFrame(frame)
         power_frame.pack(fill="x", padx=10, pady=5)
 
-        ctk.CTkLabel(power_frame, text="План электропитания ASX Hub").pack(side="left", padx=5)
+        power_label = ctk.CTkLabel(power_frame, text="План электропитания ASX Hub")
+        power_label.pack(side="left", padx=5)
+
+        # Add status label for power plan
+        self.power_status = ctk.CTkLabel(
+            power_frame,
+            text="ВЫКЛЮЧЕНО",
+            text_color="red"
+        )
+        self.power_status.pack(side="left", padx=5)
 
         self.power_switch = ctk.CTkSwitch(
             power_frame,
@@ -62,7 +71,16 @@ class TweaksTab:
         visual_frame = ctk.CTkFrame(frame)
         visual_frame.pack(fill="x", padx=10, pady=5)
 
-        ctk.CTkLabel(visual_frame, text="FSO и GameBar").pack(side="left", padx=5)
+        visual_label = ctk.CTkLabel(visual_frame, text="FSO и GameBar")
+        visual_label.pack(side="left", padx=5)
+
+        # Add status label for GameBar
+        self.visual_status = ctk.CTkLabel(
+            visual_frame,
+            text="ВЫКЛЮЧЕНО",
+            text_color="red"
+        )
+        self.visual_status.pack(side="left", padx=5)
 
         self.visual_switch = ctk.CTkSwitch(
             visual_frame,
@@ -70,6 +88,9 @@ class TweaksTab:
             command=self.toggle_visual_effects
         )
         self.visual_switch.pack(side="right", padx=5)
+
+        # Update initial states
+        self.update_status()
 
     def show_category(self, category):
         """Show content for selected category"""
@@ -80,16 +101,44 @@ class TweaksTab:
         if category == "Оптимизация и настройки":
             self.setup_optimization_page()
 
+    def update_status(self):
+        """Update status labels and switches based on current system state"""
+        # Check power plan status
+        power_enabled = self.system_tweaks.check_power_plan_status()
+        if power_enabled:
+            self.power_status.configure(text="ВКЛЮЧЕНО", text_color="green")
+            self.power_switch.select()
+        else:
+            self.power_status.configure(text="ВЫКЛЮЧЕНО", text_color="red")
+            self.power_switch.deselect()
+
+        # Check GameBar status
+        gamebar_enabled = self.system_tweaks.check_game_bar_status()
+        if gamebar_enabled:
+            self.visual_status.configure(text="ВКЛЮЧЕНО", text_color="green")
+            self.visual_switch.select()
+        else:
+            self.visual_status.configure(text="ВЫКЛЮЧЕНО", text_color="red")
+            self.visual_switch.deselect()
+
     def toggle_power_plan(self):
         """Toggle power plan optimization"""
         if self.power_switch.get():
             success = self.system_tweaks.optimize_power_plan()
-            if not success:
+            if success:
+                self.power_status.configure(text="ВКЛЮЧЕНО", text_color="green")
+            else:
                 self.power_switch.deselect()
+                self.power_status.configure(text="ВЫКЛЮЧЕНО", text_color="red")
+        self.update_status()
 
     def toggle_visual_effects(self):
         """Toggle visual effects optimization"""
         if self.visual_switch.get():
             success = self.system_tweaks.optimize_visual_effects()
-            if not success:
+            if success:
+                self.visual_status.configure(text="ВКЛЮЧЕНО", text_color="green")
+            else:
                 self.visual_switch.deselect()
+                self.visual_status.configure(text="ВЫКЛЮЧЕНО", text_color="red")
+        self.update_status()
