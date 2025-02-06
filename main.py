@@ -13,6 +13,8 @@ from gui.tab_tweaks import TweaksTab
 from gui.tab_programs import ProgramsTab
 from gui.tab_utilities import UtilitiesTab
 
+APP_VERSION = "1.0.0"
+
 def is_admin():
     try:
         if platform.system() == "Windows":
@@ -26,16 +28,21 @@ class ASXHub(ctk.CTk):
         super().__init__()
 
         # Configure window
-        self.title("ASX Hub")
+        self.title(f"ASX Hub v{APP_VERSION}")
         self.geometry("900x600")
+        self.minsize(800, 500)
 
         # Set theme
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
+        # Create main container
+        self.main_container = ctk.CTkFrame(self)
+        self.main_container.pack(fill="both", expand=True, padx=10, pady=10)
+
         # Create main tabview
-        self.tabview = ctk.CTkTabview(self)
-        self.tabview.pack(expand=True, fill="both", padx=10, pady=10)
+        self.tabview = ctk.CTkTabview(self.main_container)
+        self.tabview.pack(fill="both", expand=True)
 
         # Add tabs
         self.tab_tweaks = self.tabview.add("Твики")
@@ -50,13 +57,31 @@ class ASXHub(ctk.CTk):
         self.programs_tab = ProgramsTab(self.tab_programs)
         self.utilities_tab = UtilitiesTab(self.tab_utilities)
 
+        # Create status bar
+        self.status_bar = ctk.CTkFrame(self.main_container, height=30)
+        self.status_bar.pack(fill="x", pady=(5, 0))
+
+        # Version label
+        self.version_label = ctk.CTkLabel(
+            self.status_bar,
+            text=f"Версия: {APP_VERSION}",
+            font=("Arial", 12)
+        )
+        self.version_label.pack(side="left", padx=10)
+
+        # Admin status
+        admin_text = "Администратор" if is_admin() else "Обычный пользователь"
+        self.admin_label = ctk.CTkLabel(
+            self.status_bar,
+            text=admin_text,
+            font=("Arial", 12)
+        )
+        self.admin_label.pack(side="right", padx=10)
+
 def main():
     if platform.system() == "Windows" and not is_admin():
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
         sys.exit()
-
-    root = tk.Tk()
-    root.withdraw()  # Hide the root window
 
     app = ASXHub()
     app.mainloop()

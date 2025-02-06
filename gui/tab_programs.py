@@ -20,7 +20,8 @@ class ProgramsTab:
 
         self.search_entry = ctk.CTkEntry(
             self.search_frame,
-            placeholder_text="Поиск программ..."
+            placeholder_text="Поиск программ...",
+            height=35
         )
         self.search_entry.pack(side="left", fill="x", expand=True, padx=5)
         self.search_entry.bind("<KeyRelease>", self.search_programs)
@@ -42,26 +43,59 @@ class ProgramsTab:
         ]
 
         for name, description in programs:
-            program_frame = ctk.CTkFrame(self.programs_frame)
-            program_frame.pack(fill="x", padx=5, pady=5)
+            # Create container frame with border
+            program_frame = ctk.CTkFrame(
+                self.programs_frame,
+                fg_color="transparent",
+                border_width=2,
+                border_color=("gray70", "gray30"),
+                corner_radius=10
+            )
+            program_frame.pack(fill="x", padx=10, pady=5)
+
+            # Create inner frame for content
+            content_frame = ctk.CTkFrame(
+                program_frame,
+                fg_color="transparent"
+            )
+            content_frame.pack(fill="x", padx=10, pady=10)
+
+            # Program icon placeholder
+            icon_label = ctk.CTkLabel(
+                content_frame,
+                text="📦",
+                font=("Arial", 24)
+            )
+            icon_label.pack(side="left", padx=(5, 10))
+
+            # Text information frame
+            text_frame = ctk.CTkFrame(
+                content_frame,
+                fg_color="transparent"
+            )
+            text_frame.pack(side="left", fill="x", expand=True)
 
             name_label = ctk.CTkLabel(
-                program_frame,
+                text_frame,
                 text=name,
                 font=("Arial", 14, "bold")
             )
-            name_label.pack(side="left", padx=5)
+            name_label.pack(anchor="w")
 
             desc_label = ctk.CTkLabel(
-                program_frame,
-                text=description
+                text_frame,
+                text=description,
+                font=("Arial", 12)
             )
-            desc_label.pack(side="left", padx=5)
+            desc_label.pack(anchor="w")
 
+            # Download button
             download_button = ctk.CTkButton(
-                program_frame,
+                content_frame,
                 text="Загрузить",
-                command=lambda n=name: self.download_program(n)
+                command=lambda n=name: self.download_program(n),
+                width=100,
+                height=32
             )
             download_button.pack(side="right", padx=5)
 
@@ -70,24 +104,25 @@ class ProgramsTab:
         search_text = self.search_entry.get().lower()
 
         for program_frame in self.programs_frame.winfo_children():
-            name_label = program_frame.winfo_children()[0]
+            # Since we changed the structure, we need to navigate to the name label
+            content_frame = program_frame.winfo_children()[0]  # Get the content frame
+            text_frame = content_frame.winfo_children()[2]    # Get the text frame
+            name_label = text_frame.winfo_children()[0]       # Get the name label
+
             if search_text in name_label.cget("text").lower():
-                program_frame.pack(fill="x", padx=5, pady=5)
+                program_frame.pack(fill="x", padx=10, pady=5)
             else:
                 program_frame.pack_forget()
 
     def download_program(self, program_name):
         """Download program from GitHub"""
-        # This would use the actual GitHub URL from config
         github_url = f"https://github.com/example/{program_name.lower()}"
         filename = f"{program_name.lower()}_setup.exe"
 
         downloaded_file = self.github_handler.download_release(github_url, filename)
         if downloaded_file:
-            # Show success message
             self.show_message(f"{program_name} успешно загружен!")
         else:
-            # Show error message
             self.show_message(f"Ошибка при загрузке {program_name}")
 
     def show_message(self, message):

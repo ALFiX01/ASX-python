@@ -31,27 +31,60 @@ class UtilitiesTab:
         ]
 
         for name, description in utilities:
-            utility_frame = ctk.CTkFrame(self.utilities_frame)
-            utility_frame.pack(fill="x", padx=5, pady=5)
+            # Create container frame with border
+            utility_frame = ctk.CTkFrame(
+                self.utilities_frame,
+                fg_color="transparent",
+                border_width=2,
+                border_color=("gray70", "gray30"),
+                corner_radius=10
+            )
+            utility_frame.pack(fill="x", padx=10, pady=5)
+
+            # Create inner frame for content
+            content_frame = ctk.CTkFrame(
+                utility_frame,
+                fg_color="transparent"
+            )
+            content_frame.pack(fill="x", padx=10, pady=10)
+
+            # Utility icon placeholder
+            icon_label = ctk.CTkLabel(
+                content_frame,
+                text="🔧",
+                font=("Arial", 24)
+            )
+            icon_label.pack(side="left", padx=(5, 10))
+
+            # Text information frame
+            text_frame = ctk.CTkFrame(
+                content_frame,
+                fg_color="transparent"
+            )
+            text_frame.pack(side="left", fill="x", expand=True)
 
             name_label = ctk.CTkLabel(
-                utility_frame,
+                text_frame,
                 text=name,
                 font=("Arial", 14, "bold")
             )
-            name_label.pack(side="left", padx=5)
+            name_label.pack(anchor="w")
 
             desc_label = ctk.CTkLabel(
-                utility_frame,
-                text=description
+                text_frame,
+                text=description,
+                font=("Arial", 12)
             )
-            desc_label.pack(side="left", padx=5)
+            desc_label.pack(anchor="w")
 
+            # Action button
             button_text = "Запустить" if self.is_installed(name) else "Установить"
             action_button = ctk.CTkButton(
-                utility_frame,
+                content_frame,
                 text=button_text,
-                command=lambda n=name: self.handle_utility(n)
+                command=lambda n=name: self.handle_utility(n),
+                width=100,
+                height=32
             )
             action_button.pack(side="right", padx=5)
 
@@ -68,7 +101,6 @@ class UtilitiesTab:
 
     def install_utility(self, utility_name):
         """Download and install utility"""
-        # Используем реальный URL из конфигурации
         github_url = f"https://github.com/example/{utility_name.lower()}"
         filename = f"{utility_name.lower()}_setup.exe"
 
@@ -94,9 +126,12 @@ class UtilitiesTab:
     def update_utility_button(self, utility_name):
         """Update button text after installation"""
         for frame in self.utilities_frame.winfo_children():
-            name_label = frame.winfo_children()[0]
+            content_frame = frame.winfo_children()[0]  # Get the content frame
+            text_frame = content_frame.winfo_children()[2]  # Get the text frame
+            name_label = text_frame.winfo_children()[0]  # Get the name label
+
             if name_label.cget("text") == utility_name:
-                action_button = frame.winfo_children()[-1]
+                action_button = content_frame.winfo_children()[-1]  # Get the action button
                 action_button.configure(text="Запустить")
                 break
 
