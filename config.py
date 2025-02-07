@@ -65,8 +65,8 @@ TWEAKS = [
         'switch_ref': None
     },
     {
-        'title': "Отключить HDCP",
-        'description': "Отключает HDCP (High-bandwidth Digital Content Protection).\nМожет решить проблемы совместимости с некоторыми мониторами и устройствами захвата.",
+        'title': "HDCP",
+        'description': "HDCP (High-bandwidth Digital Content Protection).\nМожет решить проблемы совместимости с некоторыми мониторами и устройствами захвата.",
         'toggle_command': None,
         'check_status_func': None,
         'switch_ref': None

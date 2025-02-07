@@ -33,9 +33,10 @@ class SystemTweaks:
 
         try:
             # Get current power plan using powercfg
-            result = subprocess.run(['powercfg', '/getactivescheme'], capture_output=True, text=True)
-            return "ASX" in result.stdout
-        except Exception:
+            result = subprocess.run(['powercfg', '/getactivescheme'], capture_output=True, text=True, shell=True)
+            return SystemTweaks.ASX_POWER_PLAN_GUID.lower() in result.stdout.lower()
+        except Exception as e:
+            print(f"Error checking power plan status: {e}")
             return False
 
     @staticmethod
@@ -419,10 +420,10 @@ class SystemTweaks:
         return success
 
 
-    # === Отключить HDCP ===
+    # === HDCP ===
     @staticmethod
     def check_hdcp_status():
-        """Check HDCP status using Registry"""
+        """Check HDCP status using Registry. ВКЛ если в реестре нет."""
         if not SystemTweaks.is_windows():
             return False
         reg = RegistryHandler()
@@ -430,7 +431,9 @@ class SystemTweaks:
             r"HKLM\System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}", # Registry path from batch code
             "RMHdcpKeyglobZero" # Registry value name from batch code
         )
-        return hdcp_value == 1 # If RMHdcpKeyglobZero == 1 (0x1), assume HDCP is DISABLED (ВЫКЛ)
+        if hdcp_value is None: # Если значение в реестре не найдено
+            return True # HDCP ВКЛ, так как в реестре нет записи
+        return hdcp_value != 1 # Если значение есть и не равно 1, то HDCP ВКЛ, иначе ВЫКЛ (если равно 1)
 
     @staticmethod
     def toggle_hdcp():
@@ -486,39 +489,65 @@ class SystemTweaks:
             print("Error toggling Power Throttling")
         return success
 
+    import winreg
 
-    # === Работа UWP программ в фоне ===
     @staticmethod
     def check_uwp_background_status():
-        """Check UWP background apps status using Registry"""
+        """Check UWP background apps status using Registry.
+        ВЫКЛ (True) - Работа UWP программ в фоне отключена (GlobalUserDisabled = 1).
+        ВКЛ (False) - Работа UWP программ в фоне включена (GlobalUserDisabled = 0).
+        """
         if not SystemTweaks.is_windows():
             return False
         reg = RegistryHandler()
-        uwp_background_value = reg.get_registry_value(
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundActivity",
-            "DisableActivity"
+        global_disabled_value = reg.get_registry_value(
+            r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications",
+            "GlobalUserDisabled"
         )
-        return uwp_background_value == 1
+        # В батч скрипте "ВЫКЛ" соответствует GlobalUserDisabled == 0x1
+        return global_disabled_value == 0  # True если ВЫКЛ, False если ВКЛ
 
     @staticmethod
     def toggle_uwp_background():
-        """Toggle UWP background apps using Registry"""
+        """Toggle UWP background apps using Registry."""
         if not SystemTweaks.is_windows():
+            print("[Error] This operation requires administrator privileges!")
             return False
+
         reg = RegistryHandler()
         current_status = SystemTweaks.check_uwp_background_status()
-        new_uwp_background_value = 0 if current_status else 1
-        success = reg.set_registry_value(
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundActivity",
-            "DisableActivity",
-            new_uwp_background_value,
-            winreg.REG_DWORD
-        )
-        if success:
-            print(f"UWP Background Apps toggled to: {'Disabled' if new_uwp_background_value == 1 else 'Enabled'}")
+        if current_status:
+            global_disabled_value = 0
+            search_toggle_value = 1
+            embedded_mode_start_value = 3
+            status_text = "Enabled"
         else:
-            print("Error toggling UWP Background Apps")
-        return success
+            global_disabled_value = 1
+            search_toggle_value = 0
+            embedded_mode_start_value = 4
+            status_text = "Disabled"
+
+        registry_operations = [
+            (r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled",
+             global_disabled_value, winreg.REG_DWORD),
+            (r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "BackgroundAppGlobalToggle", search_toggle_value,
+             winreg.REG_DWORD),
+            (r"HKLM\SYSTEM\CurrentControlSet\Services\embeddedmode", "Start", embedded_mode_start_value, winreg.REG_DWORD),
+        ]
+
+        all_success = True
+        for path, name, value, reg_type in registry_operations:
+            success = reg.set_registry_value(path, name, value, reg_type)
+            if not success:
+                all_success = False
+                print(f"[Error] Failed to modify: {path}\\{name}")
+
+        if all_success:
+            print(f"UWP Background Apps toggled to: {status_text}")
+        else:
+            print("[Error] Failed to toggle UWP Background Apps.")
+
+        return all_success
 
 
     # === Уведомления ===

@@ -1,9 +1,11 @@
 import os
 import platform
+import win32api
 
 # Import winreg only on Windows
 if platform.system() == "Windows":
     import winreg
+    from win32api import GetLastError, FormatMessage
 
 class RegistryHandler:
     @staticmethod
@@ -35,14 +37,28 @@ class RegistryHandler:
             return None
 
         try:
-            if platform.system() == "Windows":
-                reg_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
-                value, value_type = winreg.QueryValueEx(reg_key, value_name)
-                winreg.CloseKey(reg_key)
-                return value
+            # Handle HKEY_LOCAL_MACHINE and HKEY_CURRENT_USER paths
+            if key_path.startswith("HKLM\\"):
+                hkey = winreg.HKEY_LOCAL_MACHINE
+                key_path = key_path[5:]
+            elif key_path.startswith("HKEY_LOCAL_MACHINE\\"):
+                hkey = winreg.HKEY_LOCAL_MACHINE
+                key_path = key_path[19:]
+            elif key_path.startswith("HKEY_CURRENT_USER\\"):
+                hkey = winreg.HKEY_CURRENT_USER
+                key_path = key_path[18:]
+            else:
+                hkey = winreg.HKEY_LOCAL_MACHINE
+
+            key = winreg.OpenKey(hkey, key_path, 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY)
+            value, _ = winreg.QueryValueEx(key, value_name)
+            winreg.CloseKey(key)
+            return value
+        except WindowsError as e:
+            print(f"Error reading registry value {key_path}\\{value_name}: {e}")
             return None
         except Exception as e:
-            print(f"Error getting registry value: {str(e)}")
+            print(f"Unexpected error reading registry: {e}")
             return None
 
     @staticmethod

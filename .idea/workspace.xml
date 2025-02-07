@@ -8,12 +8,15 @@
       <change afterPath="$PROJECT_DIR$/gui/tab_settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.replit" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/tab_WebResources.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_WebResources.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/tab_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_information.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_programs.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_programs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_tweaks.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_tweaks.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/replit.nix" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/github_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/github_handler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/registry_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/registry_handler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/system_tweaks.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/system_tweaks.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/uv.lock" beforeDir="false" />
     </list>
@@ -43,15 +46,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.main.executor": "Run",
-    "Python.tab_tweaks.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/Daniil/ASX/main.py"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tab_tweaks.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Daniil/ASX/main.py&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="ASX" />

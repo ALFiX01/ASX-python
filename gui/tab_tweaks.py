@@ -7,8 +7,9 @@ except ImportError:
     import sys
     sys.exit(1)
 
-from config import TWEAK_CATEGORIES, TWEAKS # Импортируем TWEAKS из config.py
+from config import TWEAK_CATEGORIES, TWEAKS  # Импортируем TWEAKS из config.py
 from utils.system_tweaks import SystemTweaks
+
 
 class TweaksTab:
     def __init__(self, parent):
@@ -20,12 +21,17 @@ class TweaksTab:
         ctk.set_default_color_theme("blue")
 
         # === Левая боковая панель (категории) ===
-        self.sidebar = ctk.CTkFrame(self.parent, width=150, corner_radius=10)
+        self.sidebar = ctk.CTkFrame(
+            self.parent,
+            width=150,
+            corner_radius=10,
+            fg_color=("gray85", "gray17")  # светло-серый фон для светлой темы
+        )
         self.sidebar.pack(side="left", fill="y", padx=5, pady=5)
 
         # === Основная область контента ===
-        self.content = ctk.CTkFrame(self.parent)
-        self.content.pack(side="left", fill="y", expand=True, padx=5, pady=5)
+        self.content = ctk.CTkScrollableFrame(self.parent) # Используем ctk.CTkScrollableFrame вместо ctk.CTkFrame
+        self.content.pack(side="left", fill="both", expand=True, padx=5, pady=5)  # Исправлено: fill="both"
 
         # === Передача функций-команд в TWEAKS ===
         TWEAKS[0]['toggle_command'] = self.toggle_power_plan
@@ -144,9 +150,10 @@ class TweaksTab:
                 text=category,
                 command=lambda c=category: self.show_category(c),
                 corner_radius=9,
-                fg_color="transparent",
-                hover_color="#668dc4",
-                text_color_disabled="grey"
+                fg_color=("gray85", "gray17"),  # цвет фона как у sidebar
+                hover_color=("gray75", "gray25"),  # сплошной цвет при наведении
+                text_color=("gray10", "gray90"),  # темный текст для светлой темы
+                text_color_disabled="gray60"
             )
             btn.pack(pady=5, padx=10, fill="x")
 
@@ -156,45 +163,57 @@ class TweaksTab:
         for widget in self.content.winfo_children():
             widget.destroy()
 
-        frame = ctk.CTkFrame(self.content, corner_radius=0)
+        frame = ctk.CTkFrame(self.content, corner_radius=0) # frame внутри ScrollableFrame
         frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # === Динамическое создание блоков твиков ===
-        for tweak_config in TWEAKS: # Используем TWEAKS из config.py
+        for tweak_config in TWEAKS:  # Используем TWEAKS из config.py
             tweak_frame = ctk.CTkFrame(frame, corner_radius=10)
-            tweak_frame.pack(fill="x", padx=10, pady=5)
+            tweak_frame.pack(fill="x", padx=10, pady=1)
 
             text_frame = ctk.CTkFrame(tweak_frame, fg_color="transparent")
-            text_frame.pack(side="left", fill="x", expand=True, padx=10, pady=8)
+            text_frame.pack(side="left", fill="both", expand=True, padx=10, pady=8)
+
+
+            # Используем grid вместо pack для text_frame
+            text_frame.grid_rowconfigure(0, weight=1) # Важно для вертикального растягивания
+            text_frame.grid_columnconfigure(0, weight=1)
+
 
             tweak_label = ctk.CTkLabel(
                 text_frame,
-                text=tweak_config['title'], # Заголовок из конфигурации
+                text=tweak_config['title'],  # Заголовок из конфигурации
                 font=("Arial", 16, "bold")
             )
-            tweak_label.pack(anchor="w")
+            # tweak_label.pack(anchor="w") # Заменено на grid
+            tweak_label.grid(row=0, column=0, sticky="w")
+
 
             tweak_desc = ctk.CTkLabel(
                 text_frame,
-                text=tweak_config['description'], # Описание из конфигурации
+                text=tweak_config['description'],  # Описание из конфигурации
                 font=("Arial", 11),
                 justify="left",
-                text_color="#808080"
+                text_color="#808080",
+                wraplength=500 # Добавляем перенос текста
             )
-            tweak_desc.pack(anchor="w", pady=(2, 0))
+            # tweak_desc.pack(anchor="w", pady=(2, 0)) # Заменено на grid
+            tweak_desc.grid(row=1, column=0, sticky="w", pady=(2,0))
+
+
 
             tweak_switch = ctk.CTkSwitch(
                 tweak_frame,
                 text="",
-                command=tweak_config['toggle_command'] # Функция переключения из конфигурации
+                command=tweak_config['toggle_command']  # Функция переключения из конфигурации
             )
             tweak_switch.pack(side="right", padx=10, pady=8)
 
             # Сохраняем ссылку на switch, чтобы можно было обновить состояние
-            tweak_config['switch_ref'] = tweak_switch # Сохраняем ссылку в конфигурации
+            tweak_config['switch_ref'] = tweak_switch  # Сохраняем ссылку в конфигурации
 
             # === Разделительная линия после каждого твика, кроме последнего ===
-            if tweak_config != TWEAKS[-1]: # Не добавляем разделитель после последнего элемента
+            if tweak_config != TWEAKS[-1]:  # Не добавляем разделитель после последнего элемента
                 separator = ctk.CTkFrame(frame, height=1, fg_color="grey70")
                 separator.pack(fill="x", padx=10, pady=(10, 5))
 
@@ -212,9 +231,9 @@ class TweaksTab:
 
     def update_status(self):
         """Обновление состояния переключателей на основе текущего состояния системы"""
-        for tweak_config in TWEAKS: # Обновляем состояние для каждого твика
-            switch = tweak_config['switch_ref'] # Получаем ссылку на switch из конфигурации
-            check_status_func = tweak_config['check_status_func'] # Функция проверки статуса
+        for tweak_config in TWEAKS:  # Обновляем состояние для каждого твика
+            switch = tweak_config['switch_ref']  # Получаем ссылку на switch из конфигурации
+            check_status_func = tweak_config['check_status_func']  # Функция проверки статуса
             if check_status_func():
                 switch.select()
             else:
@@ -222,25 +241,26 @@ class TweaksTab:
 
     def toggle_power_plan(self):
         """Переключение оптимизации плана электропитания"""
-        if TWEAKS[0]['switch_ref'].get(): # Используем ссылку на switch из TWEAKS[0]
+        if TWEAKS[0]['switch_ref'].get():  # Используем ссылку на switch из TWEAKS[0]
             success = self.system_tweaks.optimize_power_plan()
             if not success:
-                TWEAKS[0]['switch_ref'].deselect() # Отменить выбор, если оптимизация не удалась
+                TWEAKS[0]['switch_ref'].deselect()  # Отменить выбор, если оптимизация не удалась
         else:
             success = self.system_tweaks.restore_default_power_plan()
             if not success:
-                TWEAKS[0]['switch_ref'].select()    # Вернуть выбор, если восстановление не удалось
+                TWEAKS[0]['switch_ref'].select()  # Вернуть выбор, если восстановление не удалось
 
     def toggle_visual_effects(self):
         """Переключение оптимизации визуальных эффектов"""
-        if TWEAKS[1]['switch_ref'].get(): # Используем ссылку на switch из TWEAKS[1]
+        if TWEAKS[1]['switch_ref'].get():  # Используем ссылку на switch из TWEAKS[1]
             success = self.system_tweaks.optimize_visual_effects()
             if not success:
-                TWEAKS[1]['switch_ref'].deselect() # Отменить выбор, если оптимизация не удалась
+                TWEAKS[1]['switch_ref'].deselect()  # Отменить выбор, если оптимизация не удалась
         else:
             success = self.system_tweaks.restore_default_visual_effects()
             if not success:
-                TWEAKS[1]['switch_ref'].select()    # Вернуть выбор, если восстановление не удалось
+                TWEAKS[1]['switch_ref'].select()  # Вернуть выбор, если восстановление не удалось
+
 
 if __name__ == "__main__":
     app = ctk.CTk()

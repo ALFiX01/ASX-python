@@ -35,8 +35,10 @@ class ASXHub(ctk.CTk):
         self.geometry("1050x800")
         self.minsize(1050, 750)
 
-        # Set theme
-        ctk.set_appearance_mode("dark")
+        # Set theme with system detection
+        import darkdetect
+        default_mode = "Dark" if darkdetect.isDark() else "Light"
+        ctk.set_appearance_mode(default_mode)
         ctk.set_default_color_theme("blue")
 
         # Create main container

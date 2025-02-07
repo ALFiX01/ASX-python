@@ -26,9 +26,10 @@ class SettingsTab:
         # === Appearance Settings Card ===
         appearance_card = ctk.CTkFrame(
             self.settings_frame,
-            fg_color=("gray86", "gray17"), # Adaptive background color
+            fg_color=("gray95", "gray16"), # Светлее для светлой темы
             corner_radius=10,
-            border_width=0
+            border_width=1,
+            border_color=("gray80", "gray30") # Более заметная граница для светлой темы
         )
         appearance_card.pack(fill="x", padx=10, pady=(0, 15)) # Increased bottom pady for card spacing
 
@@ -79,9 +80,10 @@ class SettingsTab:
         # === Language Settings Card ===
         language_card = ctk.CTkFrame(
             self.settings_frame,
-            fg_color=("gray86", "gray17"),
+            fg_color=("gray95", "gray16"),
             corner_radius=10,
-            border_width=0
+            border_width=1,
+            border_color=("gray80", "gray30")
         )
         language_card.pack(fill="x", padx=10, pady=(15, 15)) # Increased top and bottom pady for card spacing
 
