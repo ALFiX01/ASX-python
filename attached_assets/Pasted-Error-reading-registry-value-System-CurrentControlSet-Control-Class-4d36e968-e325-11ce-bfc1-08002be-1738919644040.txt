@@ -1,0 +1,19 @@
+Error reading registry value System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\RMHdcpKeyglobZero: [WinError 2] Не удается найти указанный файл
+Error reading registry value ControlSet001\Control\Power\PowerThrottling\PowerThrottlingOff: [WinError 2] Не удается найти указанный файл
+Error reading registry value SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications\ToastEnabled: [WinError 2] Не удается найти указанный файл
+Error reading registry value System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\RMHdcpKeyglobZero: [WinError 2] Не удается найти указанный файл
+Error reading registry value ControlSet001\Control\Power\PowerThrottling\PowerThrottlingOff: [WinError 2] Не удается найти указанный файл
+Error reading registry value SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications\ToastEnabled: [WinError 2] Не удается найти указанный файл
+Error reading registry value System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\RMHdcpKeyglobZero: [WinError 2] Не удается найти указанный файл
+Error reading registry value ControlSet001\Control\Power\PowerThrottling\PowerThrottlingOff: [WinError 2] Не удается найти указанный файл
+Error reading registry value SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications\ToastEnabled: [WinError 2] Не удается найти указанный файл
+Error reading registry value System\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\RMHdcpKeyglobZero: [WinError 2] Не удается найти указанный файл
+Error reading registry value ControlSet001\Control\Power\PowerThrottling\PowerThrottlingOff: [WinError 2] Не удается найти указанный файл
+Error reading registry value SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications\ToastEnabled: [WinError 2] Не удается найти указанный файл
+Error setting registry value: [WinError 87] Параметр задан неверно
+[Error] Failed to modify: HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications\GlobalUserDisabled
+Error setting registry value: [WinError 87] Параметр задан неверно
+[Error] Failed to modify: HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search\BackgroundAppGlobalToggle
+Error setting registry value: [WinError 87] Параметр задан неверно
+[Error] Failed to modify: HKLM\SYSTEM\CurrentControlSet\Services\embeddedmode\Start
+[Error] Failed to toggle UWP Background Apps.

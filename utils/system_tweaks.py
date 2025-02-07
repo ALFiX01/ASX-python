@@ -5,7 +5,7 @@ import zipfile
 import requests  # Добавляем импорт библиотеки requests для скачивания файлов
 from utils.registry_handler import RegistryHandler
 
-# Импортируем winreg только на Windows
+# Import winreg only on Windows
 if platform.system() == "Windows":
     import winreg
 
@@ -199,15 +199,6 @@ class SystemTweaks:
             3,  # 0x3 - Value from batch code for disabling mitigations
             winreg.REG_DWORD
         )
-        # Batch code also suggests deleting "FeatureSettingsOverride" and "FeatureSettingsOverrideMask" - we are setting Override, not deleting, based on batch logic
-        # success &= reg.delete_registry_value( # No delete operation based on batch code logic
-        #     r"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management",
-        #     "FeatureSettingsOverride"
-        # )
-        # success &= reg.delete_registry_value(
-        #     r"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management",
-        #     "FeatureSettingsOverrideMask"
-        # )
 
         if success:
             print(
@@ -225,11 +216,11 @@ class SystemTweaks:
         success = True  # Assume success unless delete operation fails
 
         # Batch code suggests deleting FeatureSettingsOverride and FeatureSettingsOverrideMask to RESTORE default mitigations
-        success &= reg.delete_registry_value(  # Use &= to track success across multiple operations
+        success &= reg.delete_value(  # Use &= to track success across multiple operations
             r"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management",
             "FeatureSettingsOverride"
         )
-        success &= reg.delete_registry_value(
+        success &= reg.delete_value(
             r"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management",
             "FeatureSettingsOverrideMask"
         )
@@ -405,7 +396,7 @@ class SystemTweaks:
 
 
             # === Delete Registry Value to mark optimization as disabled ===
-            success &= reg.delete_registry_value( # Track success
+            success &= reg.delete_value( # Track success
                 r"HKEY_CURRENT_USER\Software\ALFiX inc.\ASX\Data\ParameterFunction", # Registry path from batch code
                 "NvidiaPanelOptimization" # Registry value name from batch code
             )
@@ -489,65 +480,18 @@ class SystemTweaks:
             print("Error toggling Power Throttling")
         return success
 
-    import winreg
 
     @staticmethod
     def check_uwp_background_status():
-        """Check UWP background apps status using Registry.
-        ВЫКЛ (True) - Работа UWP программ в фоне отключена (GlobalUserDisabled = 1).
-        ВКЛ (False) - Работа UWP программ в фоне включена (GlobalUserDisabled = 0).
-        """
-        if not SystemTweaks.is_windows():
-            return False
-        reg = RegistryHandler()
-        global_disabled_value = reg.get_registry_value(
-            r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications",
-            "GlobalUserDisabled"
-        )
-        # В батч скрипте "ВЫКЛ" соответствует GlobalUserDisabled == 0x1
-        return global_disabled_value == 0  # True если ВЫКЛ, False если ВКЛ
+        from utils.tweaks.uwp_background import UWPBackgroundTweak
+        tweak = UWPBackgroundTweak()
+        return tweak.check_status()
 
     @staticmethod
     def toggle_uwp_background():
-        """Toggle UWP background apps using Registry."""
-        if not SystemTweaks.is_windows():
-            print("[Error] This operation requires administrator privileges!")
-            return False
-
-        reg = RegistryHandler()
-        current_status = SystemTweaks.check_uwp_background_status()
-        if current_status:
-            global_disabled_value = 0
-            search_toggle_value = 1
-            embedded_mode_start_value = 3
-            status_text = "Enabled"
-        else:
-            global_disabled_value = 1
-            search_toggle_value = 0
-            embedded_mode_start_value = 4
-            status_text = "Disabled"
-
-        registry_operations = [
-            (r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled",
-             global_disabled_value, winreg.REG_DWORD),
-            (r"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "BackgroundAppGlobalToggle", search_toggle_value,
-             winreg.REG_DWORD),
-            (r"HKLM\SYSTEM\CurrentControlSet\Services\embeddedmode", "Start", embedded_mode_start_value, winreg.REG_DWORD),
-        ]
-
-        all_success = True
-        for path, name, value, reg_type in registry_operations:
-            success = reg.set_registry_value(path, name, value, reg_type)
-            if not success:
-                all_success = False
-                print(f"[Error] Failed to modify: {path}\\{name}")
-
-        if all_success:
-            print(f"UWP Background Apps toggled to: {status_text}")
-        else:
-            print("[Error] Failed to toggle UWP Background Apps.")
-
-        return all_success
+        from utils.tweaks.uwp_background import UWPBackgroundTweak
+        tweak = UWPBackgroundTweak()
+        return tweak.toggle()
 
 
     # === Уведомления ===
@@ -588,11 +532,9 @@ class SystemTweaks:
     @staticmethod
     def check_cortana_status():
         """Check Cortana status using Registry (example - placeholder)"""
-        # ... (check_cortana_status заглушка - БЕЗ ИЗМЕНЕНИЙ) ...
         return False
 
     @staticmethod
     def toggle_cortana():
         """Toggle Cortana using Registry (example - placeholder)"""
-        # ... (toggle_cortana заглушка - БЕЗ ИЗМЕНЕНИЙ) ...
         return True
