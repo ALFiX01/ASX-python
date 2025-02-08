@@ -6,7 +6,19 @@
   <component name="ChangeListManager">
     <list default="true" id="479b433a-1357-4230-987a-da312f8fd52f" name="Changes" comment="Stable">
       <change afterPath="$PROJECT_DIR$/gui/tab_settings.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/base_tweak.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/cortana.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/fso_gamebar.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/hdcp.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/notifications.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/nvidia_optimization.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/plugin_loader.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/power_throttling.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/powerplan.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/spectre_meltdown.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/uwp_background.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.replit" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/attached_assets/image_1738844988968.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_WebResources.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_WebResources.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_information.py" afterDir="false" />
@@ -52,9 +64,14 @@
     &quot;Python.tab_tweaks.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Daniil/ASX/main.py&quot;
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Daniil/ASX/utils/tweaks&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Daniil\ASX\utils\tweaks" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="ASX" />

@@ -3,6 +3,7 @@ import sys
 import ctypes
 import platform
 import tkinter as tk
+import json
 try:
     import customtkinter as ctk
 except ImportError:
@@ -16,13 +17,13 @@ from gui.tab_WebResources import WebResourcesTab
 from gui.tab_information import InformationTab
 from gui.tab_settings import SettingsTab
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "0.0.05"
 
 def is_admin():
     try:
         if platform.system() == "Windows":
             return ctypes.windll.shell32.IsUserAnAdmin()
-        return True  # На других ОС пока считаем, что права есть
+        return True
     except:
         return False
 
@@ -30,26 +31,18 @@ class ASXHub(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        # Configure window
         self.title(f"ASX Hub v{APP_VERSION}")
         self.geometry("1050x800")
         self.minsize(1050, 750)
 
-        # Set theme with system detection
-        import darkdetect
-        default_mode = "Dark" if darkdetect.isDark() else "Light"
-        ctk.set_appearance_mode(default_mode)
-        ctk.set_default_color_theme("blue")
+        self.load_and_apply_settings()  # Load and apply settings
 
-        # Create main container
         self.main_container = ctk.CTkFrame(self)
         self.main_container.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Create main tabview
         self.tabview = ctk.CTkTabview(self.main_container)
         self.tabview.pack(fill="both", expand=True)
 
-        # Add tabs
         self.tab_tweaks = self.tabview.add("Твики")
         self.tab_programs = self.tabview.add("Программы")
         self.tab_utilities = self.tabview.add("Утилиты")
@@ -57,7 +50,6 @@ class ASXHub(ctk.CTk):
         self.tab_info = self.tabview.add("Информация")
         self.tab_settings = self.tabview.add("Настройка")
 
-        # Initialize tab contents
         self.tweaks_tab = TweaksTab(self.tab_tweaks)
         self.programs_tab = ProgramsTab(self.tab_programs)
         self.utilities_tab = UtilitiesTab(self.tab_utilities)
@@ -65,11 +57,9 @@ class ASXHub(ctk.CTk):
         self.information_tab = InformationTab(self.tab_info)
         self.settings_tab = SettingsTab(self.tab_settings)
 
-        # Create status bar
         self.status_bar = ctk.CTkFrame(self.main_container, height=30)
         self.status_bar.pack(fill="x", pady=(5, 0))
 
-        # Version label
         self.version_label = ctk.CTkLabel(
             self.status_bar,
             text=f"Версия: {APP_VERSION}",
@@ -77,7 +67,6 @@ class ASXHub(ctk.CTk):
         )
         self.version_label.pack(side="left", padx=10)
 
-        # Admin status
         admin_text = "Администратор" if is_admin() else "Обычный пользователь"
         self.admin_label = ctk.CTkLabel(
             self.status_bar,
@@ -85,6 +74,33 @@ class ASXHub(ctk.CTk):
             font=("Arial", 12)
         )
         self.admin_label.pack(side="right", padx=10)
+
+    def load_and_apply_settings(self):
+        """Loads settings and applies them, handling 'System' mode."""
+        settings_file = "settings.json"
+        try:
+            with open(settings_file, "r") as f:
+                settings = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            settings = {
+                "appearance_mode": "System",  # Default to System
+                "theme": "blue"
+            }
+            try:
+                with open(settings_file, "w") as f:
+                    json.dump(settings, f, indent=4)
+            except Exception as e:
+                print(f"Error creating default settings file: {e}")
+
+        # --- CRITICAL: Handle 'System' mode correctly ---
+        if settings["appearance_mode"] == "System":
+            import darkdetect
+            system_mode = "Dark" if darkdetect.isDark() else "Light"
+            ctk.set_appearance_mode(system_mode)
+        else:
+            ctk.set_appearance_mode(settings["appearance_mode"])
+
+        ctk.set_default_color_theme(settings["theme"])
 
 def main():
     if platform.system() == "Windows" and not is_admin():

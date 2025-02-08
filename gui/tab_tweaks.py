@@ -7,266 +7,205 @@ except ImportError:
     import sys
     sys.exit(1)
 
-from config import TWEAK_CATEGORIES, TWEAKS  # Импортируем TWEAKS из config.py
+from config import TWEAK_CATEGORIES, TWEAKS
 from utils.system_tweaks import SystemTweaks
+from utils.tweaks.notifications import NotificationsTweak
+from utils.tweaks.cortana import CortanaTweak
 
 
 class TweaksTab:
     def __init__(self, parent):
         self.parent = parent
         self.system_tweaks = SystemTweaks()
+        self._update_id = None
 
-        # === Настройка темы и внешнего вида ===
-        ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("blue")
-
-        # === Левая боковая панель (категории) ===
+        # === UI Setup ===
         self.sidebar = ctk.CTkFrame(
             self.parent,
             width=150,
             corner_radius=10,
-            fg_color=("gray85", "gray17")  # светло-серый фон для светлой темы
+            fg_color=("gray85", "gray17")
         )
         self.sidebar.pack(side="left", fill="y", padx=5, pady=5)
 
-        # === Основная область контента ===
-        self.content = ctk.CTkScrollableFrame(self.parent) # Используем ctk.CTkScrollableFrame вместо ctk.CTkFrame
-        self.content.pack(side="left", fill="both", expand=True, padx=5, pady=5)  # Исправлено: fill="both"
+        self.content = ctk.CTkScrollableFrame(self.parent)
+        self.content.pack(side="left", fill="both", expand=True, padx=5, pady=5)
 
-        # === Передача функций-команд в TWEAKS ===
-        TWEAKS[0]['toggle_command'] = self.toggle_power_plan
-        TWEAKS[1]['toggle_command'] = self.toggle_visual_effects
-        TWEAKS[0]['check_status_func'] = self.system_tweaks.check_power_plan_status
-        TWEAKS[1]['check_status_func'] = self.system_tweaks.check_game_bar_status
-
-        # === Связывание новых твиков с методами SystemTweaks ===
-        TWEAKS[2]['toggle_command'] = self.toggle_spectre_meltdown
-        TWEAKS[2]['check_status_func'] = self.system_tweaks.check_spectre_meltdown_status
-
-        TWEAKS[3]['toggle_command'] = self.toggle_nvidia_optimization
-        TWEAKS[3]['check_status_func'] = self.system_tweaks.check_nvidia_optimization_status
-
-        TWEAKS[4]['toggle_command'] = self.toggle_hdcp
-        TWEAKS[4]['check_status_func'] = self.system_tweaks.check_hdcp_status
-
-        TWEAKS[5]['toggle_command'] = self.toggle_power_throttling
-        TWEAKS[5]['check_status_func'] = self.system_tweaks.check_power_throttling_status
-
-        TWEAKS[6]['toggle_command'] = self.toggle_uwp_background
-        TWEAKS[6]['check_status_func'] = self.system_tweaks.check_uwp_background_status
-
-        TWEAKS[7]['toggle_command'] = self.toggle_notifications
-        TWEAKS[7]['check_status_func'] = self.system_tweaks.check_notifications_status
-
-        TWEAKS[8]['toggle_command'] = self.toggle_cortana
-        TWEAKS[8]['check_status_func'] = self.system_tweaks.check_cortana_status
+        # === Create Tweak Instances Dynamically ===
+        self.tweaks = {}
+        for tweak_config in TWEAKS:
+            self.tweaks[tweak_config['key']] = self._create_tweak_data(tweak_config)
 
         self.setup_categories()
-        self.setup_optimization_page()
+        self.show_category("Оптимизация и настройки")
 
-    # === Добавьте заглушки для новых toggle_command методов в TweaksTab ===
+    def _create_tweak_data(self, tweak_config):
+        """Creates the tweak data dictionary."""
+        tweak_data = {
+            'category': tweak_config['category'],
+            'instance': None,
+            'switch_ref': None,  # Will be set later
+        }
+
+        if tweak_config['class_name']:
+            module_name = tweak_config.get('module', tweak_config['key'])
+            module = __import__(f"utils.tweaks.{module_name}", fromlist=[tweak_config['class_name']])
+            tweak_class = getattr(module, tweak_config['class_name'])
+            tweak_data['instance'] = tweak_class()
+            tweak_data['check_status_func'] = tweak_data['instance'].check_status
+        else:
+            tweak_data['check_status_func'] = getattr(self.system_tweaks, f"check_{tweak_config['key']}_status", None)
+
+        tweak_data['toggle_command'] = getattr(self, f"toggle_{tweak_config['key']}", None)
+        if tweak_data['toggle_command'] is None:
+            print(f"Warning: toggle_{tweak_config['key']} method not found in TweaksTab.")
+
+        return tweak_data
+
+    # --- Tweak Toggle Functions ---
     def toggle_spectre_meltdown(self):
-        """Toggle Spectre/Meltdown mitigations"""
-        if TWEAKS[2]['switch_ref'].get():
-            success = self.system_tweaks.optimize_spectre_meltdown()
-            if not success:
-                TWEAKS[2]['switch_ref'].deselect()
-        else:
-            success = self.system_tweaks.restore_default_spectre_meltdown()
-            if not success:
-                TWEAKS[2]['switch_ref'].select()
-
+        self._generic_toggle("spectre_meltdown", self.system_tweaks.toggle_spectre_meltdown, self.system_tweaks.toggle_spectre_meltdown)
     def toggle_nvidia_optimization(self):
-        """Toggle Nvidia optimization"""
-        if TWEAKS[3]['switch_ref'].get():
-            success = self.system_tweaks.optimize_nvidia_optimization()
-            if not success:
-                TWEAKS[3]['switch_ref'].deselect()
-        else:
-            success = self.system_tweaks.restore_default_nvidia_optimization()
-            if not success:
-                TWEAKS[3]['switch_ref'].select()
-
+        self._generic_toggle("nvidia_optimization", self.system_tweaks.toggle_nvidia_optimization, self.system_tweaks.toggle_nvidia_optimization)
     def toggle_hdcp(self):
-        """Toggle HDCP"""
-        if TWEAKS[4]['switch_ref'].get():
-            success = self.system_tweaks.toggle_hdcp()
-            if not success:
-                TWEAKS[4]['switch_ref'].deselect()
-        else:
-            success = self.system_tweaks.toggle_hdcp()  # Assuming toggle_hdcp toggles state
-            if not success:
-                TWEAKS[4]['switch_ref'].select()
-
+        self._generic_toggle("hdcp", self.system_tweaks.toggle_hdcp, self.system_tweaks.toggle_hdcp)
     def toggle_power_throttling(self):
-        """Toggle Power Throttling"""
-        if TWEAKS[5]['switch_ref'].get():
-            success = self.system_tweaks.toggle_power_throttling()
-            if not success:
-                TWEAKS[5]['switch_ref'].deselect()
-        else:
-            success = self.system_tweaks.toggle_power_throttling()  # Assuming toggle_power_throttling toggles state
-            if not success:
-                TWEAKS[5]['switch_ref'].select()
-
+        self._generic_toggle("power_throttling", self.system_tweaks.toggle_power_throttling, self.system_tweaks.toggle_power_throttling)
     def toggle_uwp_background(self):
-        """Toggle UWP Background Apps"""
-        if TWEAKS[6]['switch_ref'].get():
-            success = self.system_tweaks.toggle_uwp_background()
-            if not success:
-                TWEAKS[6]['switch_ref'].deselect()
-        else:
-            success = self.system_tweaks.toggle_uwp_background()  # Assuming toggle_uwp_background toggles state
-            if not success:
-                TWEAKS[6]['switch_ref'].select()
+        self._generic_toggle("uwp_background", self.system_tweaks.toggle_uwp_background, self.system_tweaks.toggle_uwp_background)
+    def toggle_FsoGameBar(self):
+        self._generic_toggle("FsoGameBar", self.system_tweaks.toggle_FsoGameBar, self.system_tweaks.toggle_FsoGameBar)
+    def toggle_power_plan(self):
+        self._generic_toggle("power_plan", self.system_tweaks.toggle_powerplan, self.system_tweaks.toggle_powerplan)
 
     def toggle_notifications(self):
-        """Toggle Notifications"""
-        if TWEAKS[7]['switch_ref'].get():
-            success = self.system_tweaks.toggle_notifications()
+        tweak_instance = self.tweaks["notifications"]['instance']
+        if self.tweaks["notifications"]['switch_ref'].get():
+            success = tweak_instance.disable()
             if not success:
-                TWEAKS[7]['switch_ref'].deselect()
+                self.tweaks["notifications"]['switch_ref'].deselect()
         else:
-            success = self.system_tweaks.toggle_notifications()  # Assuming toggle_notifications toggles state
+            success = tweak_instance.enable()
             if not success:
-                TWEAKS[7]['switch_ref'].select()
+                self.tweaks["notifications"]['switch_ref'].select()
 
     def toggle_cortana(self):
-        """Toggle Cortana"""
-        if TWEAKS[8]['switch_ref'].get():
-            success = self.system_tweaks.toggle_cortana()
+        tweak_instance = self.tweaks["cortana"]['instance']
+        if self.tweaks["cortana"]['switch_ref'].get():
+            success = tweak_instance.disable()
             if not success:
-                TWEAKS[8]['switch_ref'].deselect()
+                self.tweaks["cortana"]['switch_ref'].deselect()
         else:
-            success = self.system_tweaks.toggle_cortana()  # Assuming toggle_cortana toggles state
+            success = tweak_instance.enable()
             if not success:
-                TWEAKS[8]['switch_ref'].select()
+                self.tweaks["cortana"]['switch_ref'].select()
+
+    def _generic_toggle(self, tweak_key, enable_func, disable_func):
+        switch_ref = self.tweaks[tweak_key]['switch_ref']
+        if switch_ref.get():
+            success = enable_func()
+            if not success:
+                switch_ref.deselect()
+        else:
+            success = disable_func()
+            if not success:
+                switch_ref.select()
 
     def setup_categories(self):
-        """Настройка кнопок категорий в боковой панели"""
+        """Category button setup."""
         for category in TWEAK_CATEGORIES:
             btn = ctk.CTkButton(
                 self.sidebar,
                 text=category,
                 command=lambda c=category: self.show_category(c),
                 corner_radius=9,
-                fg_color=("gray85", "gray17"),  # цвет фона как у sidebar
-                hover_color=("gray75", "gray25"),  # сплошной цвет при наведении
-                text_color=("gray10", "gray90"),  # темный текст для светлой темы
+                fg_color=("gray85", "gray17"),
+                hover_color=("gray75", "gray25"),
+                text_color=("gray10", "gray90"),
                 text_color_disabled="gray60"
             )
             btn.pack(pady=5, padx=10, fill="x")
 
-    def setup_optimization_page(self):
-        """Настройка страницы оптимизации и настроек - Твики генерируются динамически из config.py"""
-        # Очистка текущего контента
+    def setup_tweaks_page(self, category):
+        """Sets up the tweaks page for a given category."""
         for widget in self.content.winfo_children():
             widget.destroy()
 
-        frame = ctk.CTkFrame(self.content, corner_radius=0) # frame внутри ScrollableFrame
+        frame = ctk.CTkFrame(self.content, corner_radius=0)
         frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # === Динамическое создание блоков твиков ===
-        for tweak_config in TWEAKS:  # Используем TWEAKS из config.py
+        filtered_tweaks = {k: v for k, v in self.tweaks.items() if v['category'] == category}
+
+        for tweak_key, tweak_data in filtered_tweaks.items():
             tweak_frame = ctk.CTkFrame(frame, corner_radius=10)
             tweak_frame.pack(fill="x", padx=10, pady=1)
 
             text_frame = ctk.CTkFrame(tweak_frame, fg_color="transparent")
             text_frame.pack(side="left", fill="both", expand=True, padx=10, pady=8)
-
-
-            # Используем grid вместо pack для text_frame
-            text_frame.grid_rowconfigure(0, weight=1) # Важно для вертикального растягивания
+            text_frame.grid_rowconfigure(0, weight=1)
             text_frame.grid_columnconfigure(0, weight=1)
 
+            if tweak_data['instance']:
+                title = tweak_data['instance'].metadata.title
+                description = tweak_data['instance'].metadata.description
+            else:
+                title = tweak_key.replace("_", " ").title()
+                description = "No description available."
 
-            tweak_label = ctk.CTkLabel(
-                text_frame,
-                text=tweak_config['title'],  # Заголовок из конфигурации
-                font=("Arial", 16, "bold")
-            )
-            # tweak_label.pack(anchor="w") # Заменено на grid
+            tweak_label = ctk.CTkLabel(text_frame, text=title, font=("Arial", 16, "bold"))
             tweak_label.grid(row=0, column=0, sticky="w")
-
 
             tweak_desc = ctk.CTkLabel(
                 text_frame,
-                text=tweak_config['description'],  # Описание из конфигурации
+                text=description,
                 font=("Arial", 11),
                 justify="left",
                 text_color="#808080",
-                wraplength=500 # Добавляем перенос текста
+                wraplength=500
             )
-            # tweak_desc.pack(anchor="w", pady=(2, 0)) # Заменено на grid
-            tweak_desc.grid(row=1, column=0, sticky="w", pady=(2,0))
+            tweak_desc.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
-
-
+            # --- Create the switch and store the tweak key ---
             tweak_switch = ctk.CTkSwitch(
                 tweak_frame,
                 text="",
-                command=tweak_config['toggle_command']  # Функция переключения из конфигурации
+                command=tweak_data['toggle_command']
             )
             tweak_switch.pack(side="right", padx=10, pady=8)
+            tweak_switch.tweak_key = tweak_key  # Store the key!
+            tweak_data['switch_ref'] = tweak_switch
 
-            # Сохраняем ссылку на switch, чтобы можно было обновить состояние
-            tweak_config['switch_ref'] = tweak_switch  # Сохраняем ссылку в конфигурации
 
-            # === Разделительная линия после каждого твика, кроме последнего ===
-            if tweak_config != TWEAKS[-1]:  # Не добавляем разделитель после последнего элемента
+            tweak_keys = list(filtered_tweaks.keys())
+            if tweak_key != tweak_keys[-1]:
                 separator = ctk.CTkFrame(frame, height=1, fg_color="grey70")
                 separator.pack(fill="x", padx=10, pady=(10, 5))
 
-        # Обновление начальных состояний переключателей
-        self.update_status()
+        if self._update_id is not None:
+            self.parent.after_cancel(self._update_id)
+        # Use after() with a delay
+        self._update_id = self.parent.after(50, self.update_status)
+
 
     def show_category(self, category):
-        """Отображение контента для выбранной категории"""
-        # Очистка текущего контента
-        for widget in self.content.winfo_children():
-            widget.destroy()
-
-        if category == "Оптимизация и настройки":
-            self.setup_optimization_page()
+        """Show content for category."""
+        self.setup_tweaks_page(category)
 
     def update_status(self):
-        """Обновление состояния переключателей на основе текущего состояния системы"""
-        for tweak_config in TWEAKS:  # Обновляем состояние для каждого твика
-            switch = tweak_config['switch_ref']  # Получаем ссылку на switch из конфигурации
-            check_status_func = tweak_config['check_status_func']  # Функция проверки статуса
-            if check_status_func():
-                switch.select()
-            else:
-                switch.deselect()
+        """Update switch states."""
+        for tweak_key, tweak_data in self.tweaks.items():
+            switch = tweak_data.get('switch_ref')
+            check_status_func = tweak_data.get('check_status_func')
 
-    def toggle_power_plan(self):
-        """Переключение оптимизации плана электропитания"""
-        if TWEAKS[0]['switch_ref'].get():  # Используем ссылку на switch из TWEAKS[0]
-            success = self.system_tweaks.optimize_power_plan()
-            if not success:
-                TWEAKS[0]['switch_ref'].deselect()  # Отменить выбор, если оптимизация не удалась
-        else:
-            success = self.system_tweaks.restore_default_power_plan()
-            if not success:
-                TWEAKS[0]['switch_ref'].select()  # Вернуть выбор, если восстановление не удалось
-
-    def toggle_visual_effects(self):
-        """Переключение оптимизации визуальных эффектов"""
-        if TWEAKS[1]['switch_ref'].get():  # Используем ссылку на switch из TWEAKS[1]
-            success = self.system_tweaks.optimize_visual_effects()
-            if not success:
-                TWEAKS[1]['switch_ref'].deselect()  # Отменить выбор, если оптимизация не удалась
-        else:
-            success = self.system_tweaks.restore_default_visual_effects()
-            if not success:
-                TWEAKS[1]['switch_ref'].select()  # Вернуть выбор, если восстановление не удалось
-
-
+            # --- Check for existence using winfo_exists() ---
+            if switch is not None and check_status_func and switch.winfo_exists():
+                if check_status_func():
+                    switch.select()
+                else:
+                    switch.deselect()
 if __name__ == "__main__":
     app = ctk.CTk()
     app.title("ASX Hub Tweaks")
     app.geometry("800x700")
-
     tweaks_tab = TweaksTab(app)
-
     app.mainloop()

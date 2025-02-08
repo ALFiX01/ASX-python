@@ -1,4 +1,10 @@
 # Application configuration
+from utils.tweaks.fso_gamebar import FsoGameBarTweak
+from utils.tweaks.hdcp import HdcpTweak
+from utils.tweaks.nvidia_optimization import NvidiaOptimizationTweak
+from utils.tweaks.power_throttling import PowerThrottlingTweak
+from utils.tweaks.powerplan import PowerPlanTweak
+from utils.tweaks.spectre_meltdown import SpectreMeltdownTweak
 
 # GitHub API configuration
 GITHUB_API_URL = "https://api.github.com"
@@ -34,70 +40,62 @@ PROGRAM_SOURCES = {
     }
 }
 
-# Определение твиков
+# --- Tweak Definitions (Refactored) ---
+#  - Use 'class_name' to specify the class (as a string).
+#  - Use 'module' to specify the module (optional, for brevity).
 TWEAKS = [
     {
-        'title': "План электропитания ASX Hub",
-        'description': "Оптимизированный план электропитания для максимальной производительности.\nУменьшает задержки и увеличивает FPS в играх.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'power_plan',
+        'class_name': 'PowerPlanTweak',  # No specific class
+        'module':'powerplan',
+        'category': "Оптимизация и настройки",
     },
     {
-        'title': "FSO и GameBar",
-        'description': "Оптимизация игровых настроек Windows для лучшей производительности.\nОтключает ненужные визуальные эффекты и игровую панель Windows.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'FsoGameBar',
+        'class_name': 'FsoGameBarTweak',
+        'module':'fso_gamebar',
+        'category': "Оптимизация и настройки",
     },
     {
-        'title': "Spectre, Meltdown, DownFall Mitigations",
-        'description': "Отключение аппаратных средств устранения уязвимостей Spectre, Meltdown и DownFall.\nМожет повысить производительность, но снижает безопасность.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'spectre_meltdown',
+        'class_name': 'SpectreMeltdownTweak',
+        'module': 'spectre_meltdown',
+        'category': "Оптимизация и настройки",
     },
     {
-        'title': "Оптимизация настроек Nvidia",
-        'description': "Применение рекомендуемых настроек Nvidia для повышения производительности и снижения задержек.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'nvidia_optimization',
+        'class_name': 'NvidiaOptimizationTweak',
+        'module': 'nvidia_optimization',
+        'category': "Оптимизация и настройки",
     },
     {
-        'title': "HDCP",
-        'description': "HDCP (High-bandwidth Digital Content Protection).\nМожет решить проблемы совместимости с некоторыми мониторами и устройствами захвата.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'hdcp',
+        'class_name': 'HdcpTweak',
+        'module': 'hdcp',
+        'category': "Оптимизация и настройки",
     },
     {
-        'title': "Отключить Power Throttling",
-        'description': "Отключает Power Throttling, функцию Windows, снижающую производительность приложений в фоновом режиме.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'power_throttling',
+        'class_name': 'PowerThrottlingTweak',
+        'module': 'power_throttling',
+        'category': "Оптимизация и настройки",
     },
     {
-        'title': "Работа UWP программ в фоне",
-        'description': "Запрещает UWP (Universal Windows Platform) приложениям работать в фоновом режиме.\nМожет снизить использование ресурсов системы.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'uwp_background',
+        'class_name': 'UWPBackgroundTweak',
+        'module': 'uwp_background',
+        'category': "Оптимизация и настройки",
     },
     {
-        'title': "Уведомления",
-        'description': "Отключает уведомления Windows.\nУменьшает отвлекающие факторы и повышает концентрацию.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'notifications',
+        'class_name': 'NotificationsTweak',  # Class name as a string
+        'module': 'notifications',  # Module name (optional, for brevity)
+        'category': "Оптимизация и настройки",
     },
     {
-        'title': "Cortana",
-        'description': "Отключает Cortana, голосового ассистента Windows.\nОсвобождает системные ресурсы и повышает конфиденциальность.",
-        'toggle_command': None,
-        'check_status_func': None,
-        'switch_ref': None
+        'key': 'cortana',
+        'class_name': 'CortanaTweak',
+        'module': 'cortana',
+        'category': "Оптимизация и настройки",
     },
-    # Добавьте другие твики сюда в виде словарей
 ]
