@@ -13,7 +13,7 @@ class UWPBackgroundTweak(BaseTweak):
     def metadata(self) -> TweakMetadata:
         return TweakMetadata(
             title="Работа UWP программ в фоне",
-            description="Запрещает UWP (Universal Windows Platform) приложениям работать в фоновом режиме.\nМожет снизить использование ресурсов системы.",
+            description="Запрещает UWP (Universal Windows Platform) приложениям работать в фоновом режиме.",
             category="Оптимизация и настройки"
         )
     

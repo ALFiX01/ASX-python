@@ -162,3 +162,16 @@ class SystemTweaks:
         from utils.tweaks.cortana import CortanaTweak
         tweak = CortanaTweak()
         return tweak.toggle()
+
+    # === FastBoot ===
+    @staticmethod
+    def check_fastboot_status():
+        from utils.tweaks.fastboot import FastBootTweak
+        tweak = FastBootTweak()
+        return tweak.check_status()
+
+    @staticmethod
+    def toggle_fastboot():
+        from utils.tweaks.fastboot import FastBootTweak
+        tweak = FastBootTweak()
+        return tweak.toggle()

@@ -3,65 +3,64 @@ import tkinter as tk
 try:
     import customtkinter as ctk
 except ImportError:
-    print("Error: CustomTkinter not found. Please install it using: pip install customtkinter")
+    print("Error: CustomTkinter not found.  Please install it using: pip install customtkinter")
     import sys
     sys.exit(1)
 from tkinter import messagebox
-import webbrowser  # Import for opening web browser
+import webbrowser
 
 class WebResourcesTab:
     def __init__(self, parent):
         self.parent = parent
 
-        # === Web Resources List Frame (Улучшенный стиль) ===
+        # === Web Resources List Frame (Scrollable) ===
         self.web_resources_frame = ctk.CTkScrollableFrame(
             self.parent,
-            fg_color="transparent" # Прозрачный фон для интеграции
+            fg_color="transparent"  # Transparent background for better integration
         )
-        self.web_resources_frame.pack(fill="both", expand=True, padx=10, pady=10) # Увеличены отступы
+        self.web_resources_frame.pack(fill="both", expand=True, padx=20, pady=20)  # More generous padding
 
         self.setup_web_resources_list()
 
     def setup_web_resources_list(self):
         """Setup the list of web resources"""
         web_resources = [
-            ("Google", "Поисковая система", "https://www.google.com"),
-            ("YouTube", "Видеохостинг", "https://www.youtube.com"),
-            ("GitHub", "Платформа для разработчиков", "https://github.com"),
-            ("Stack Overflow", "Q&A для программистов", "https://stackoverflow.com"),
-            ("Reddit", "Социальная сеть и форум", "https://www.reddit.com"),
+            ("Сочетания клавиш Windows", "Поисковая система", "https://alfix-inc.yonote.ru/share/bf2a0a30-f29e-4dc0-a9ef-52b034503497"),
+            ("Расширения для браузера", "Видеохостинг", "https://alfix-inc.yonote.ru/share/8e24ecd0-aadb-4a1e-83f4-b66d76710d2c"),
+            ("Веб-Сайты", "Платформа для разработчиков", "https://alfix-inc.yonote.ru/share/c09b6731-f1e2-4fe4-a924-f420ecef3972"),
             # Add more web resources here
         ]
 
         for name, description, url in web_resources:
-            # === Web Resource Frame (Карточка веб-ресурса) ===
+            # === Web Resource Card (Individual Item) ===
             web_resource_frame = ctk.CTkFrame(
                 self.web_resources_frame,
-                fg_color=("gray86", "gray17"), # Светлый фон в светлой теме, темный в темной
-                corner_radius=10,
-                border_width=0 # Убираем границу, фон карточки и так выделяет
+                fg_color=("gray90", "gray15"),  # Lighter background for contrast, subtle difference
+                corner_radius=12,             # Slightly more rounded corners
+                border_width=1,              # Subtle border
+                border_color=("gray80", "gray25") # Light border, consistent with theme
             )
-            web_resource_frame.pack(fill="x", padx=10, pady=5)
-            web_resource_frame.bind("<Enter>", lambda event, frame=web_resource_frame: self.on_resource_hover(event, frame)) # Hover effect
-            web_resource_frame.bind("<Leave>", lambda event, frame=web_resource_frame: self.on_resource_leave(event, frame)) # Hover effect
+            web_resource_frame.pack(fill="x", padx=10, pady=8)  # Tighter vertical padding, consistent spacing
+            web_resource_frame.bind("<Enter>", lambda event, frame=web_resource_frame: self.on_resource_hover(event, frame))
+            web_resource_frame.bind("<Leave>", lambda event, frame=web_resource_frame: self.on_resource_leave(event, frame))
 
-            # === Content Frame (Внутренний фрейм для контента) ===
+            # === Content Frame (Inner layout) ===
             content_frame = ctk.CTkFrame(
                 web_resource_frame,
-                fg_color="transparent"
+                fg_color="transparent"  # Inherit background from parent
             )
-            content_frame.pack(fill="x", padx=15, pady=15) # Увеличены внутренние отступы
+            content_frame.pack(fill="x", padx=16, pady=16)  # Consistent padding
 
-            # === Icon Label (Иконка веб-ресурса - placeholder) ===
+            # === Icon Label ===
             icon_label = ctk.CTkLabel(
                 content_frame,
-                text="🌐", # Placeholder иконка - можно заменить на изображения
-                font=("Arial", 30), # Увеличен размер иконки
-                text_color=("gray50", "gray70") # Более блеклый цвет иконки
+                text="🌐",  # Placeholder icon -  we're keeping this
+                font=("Arial", 28),  # Slightly smaller icon
+                text_color=("gray60", "gray50")  # Consistent color, slightly darker in light mode
             )
-            icon_label.pack(side="left", padx=(0, 15)) # Увеличен отступ справа от иконки
+            icon_label.pack(side="left", padx=(0, 16))  # Consistent spacing
 
-            # === Text Frame (Фрейм для текста - название и описание) ===
+            # === Text Frame (For Name and Description) ===
             text_frame = ctk.CTkFrame(
                 content_frame,
                 fg_color="transparent"
@@ -71,28 +70,35 @@ class WebResourcesTab:
             name_label = ctk.CTkLabel(
                 text_frame,
                 text=name,
-                font=("Arial", 15, "bold") # Чуть больше размер названия
+                font=("Segoe UI", 16, "bold"),  # Use a more modern font, slightly larger
+                anchor="w",                     # Left-align text
+                justify="left"                  # Ensure multi-line text is left-aligned
             )
-            name_label.pack(anchor="w")
+            name_label.pack(fill="x")  # Fill horizontally
 
             desc_label = ctk.CTkLabel(
                 text_frame,
                 text=description,
-                font=("Arial", 12),
-                text_color=("gray50", "gray60") # Блеклый цвет описания для обеих тем
+                font=("Segoe UI", 13),  # Slightly larger description, modern font
+                text_color=("gray50", "gray60"),
+                anchor="w",
+                justify="left",
+                wraplength=400  # Add wraplength to prevent very long descriptions from stretching the layout
             )
-            desc_label.pack(anchor="w")
+            desc_label.pack(fill="x")
 
-            # === Open Button (Кнопка "Открыть") ===
+            # === Open Button ===
             open_button = ctk.CTkButton(
                 content_frame,
                 text="Открыть",
                 command=lambda u=url: self.open_web_resource(u),
                 width=100,
                 height=32,
-                corner_radius=8 # Скругление углов кнопки
+                corner_radius=8,
+                fg_color=("#4CAF50", "#388E3C"),  # Use a more standard "action" color (green)
+                hover_color=("#66BB6A", "#43A047") # Darker green on hover
             )
-            open_button.pack(side="right", padx=5)
+            open_button.pack(side="right", padx=(10, 0))  # Add some left padding
 
     def open_web_resource(self, url):
         """Open web resource in default browser"""
@@ -100,23 +106,23 @@ class WebResourcesTab:
 
     def show_message(self, message):
         """Show a message dialog"""
-        messagebox.showinfo(
-            title="Сообщение",
-            message=message
-        )
+        messagebox.showinfo(title="Сообщение", message=message)
 
     def on_resource_hover(self, event, frame):
-        """Обработчик наведения мыши на карточку веб-ресурса"""
-        frame.configure(border_width=2, border_color=("#56a6db", "#56a6db")) # Выделение рамкой при наведении
+        """Handle mouse hover on resource card"""
+        frame.configure(border_width=2, border_color=("#4285F4", "#4285F4"))  # More distinct hover color (blue)
 
     def on_resource_leave(self, event, frame):
-        """Обработчик ухода мыши с карточки веб-ресурса"""
-        frame.configure(border_width=0, border_color=("gray70", "gray30")) # Возврат к обычному виду
+        """Handle mouse leaving resource card"""
+        frame.configure(border_width=1, border_color=("gray80", "gray25"))  # Back to subtle border
 
 if __name__ == "__main__":
+    ctk.set_appearance_mode("system")  # Use system's light/dark mode
+    ctk.set_default_color_theme("blue") #A good default theme
+
     app = ctk.CTk()
     app.title("Web Resources Tab Example")
-    app.geometry("800x700")
+    app.geometry("800x600")  # Slightly adjusted size
 
     web_resources_tab = WebResourcesTab(app)
 

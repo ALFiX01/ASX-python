@@ -4,33 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="479b433a-1357-4230-987a-da312f8fd52f" name="Changes" comment="Stable">
-      <change afterPath="$PROJECT_DIR$/gui/tab_settings.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/base_tweak.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/cortana.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/fso_gamebar.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/hdcp.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/notifications.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/nvidia_optimization.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/plugin_loader.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/power_throttling.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/powerplan.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/spectre_meltdown.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/tweaks/uwp_background.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.replit" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/attached_assets/image_1738844988968.png" beforeDir="false" />
+    <list default="true" id="479b433a-1357-4230-987a-da312f8fd52f" name="Changes" comment="0.0.05">
+      <change afterPath="$PROJECT_DIR$/utils/tweaks/fastboot.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_WebResources.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_WebResources.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_information.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_information.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_programs.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_programs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/tab_settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_tweaks.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_tweaks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/tab_utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_utilities.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/replit.nix" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/github_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/github_handler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/registry_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/registry_handler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/settings.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/system_tweaks.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/system_tweaks.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/uv.lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/tweaks/uwp_background.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/tweaks/uwp_background.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

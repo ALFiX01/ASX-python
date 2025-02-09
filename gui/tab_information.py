@@ -18,7 +18,8 @@ except ImportError:
     GPU_AVAILABLE = False
     print("Warning: GPUtil library not found. GPU information will not be available.")
 
-APP_VERSION = "1.0.0" # Make sure this is defined in your main app or config
+from config import APP_VERSION
+
 
 class InformationTab:
     def __init__(self, parent):
@@ -51,14 +52,14 @@ class InformationTab:
         app_title_label = ctk.CTkLabel(
             app_info_content,
             text="ASX Hub",
-            font=("Arial", 26, "bold") # Larger and bolder title
+            font=("Roboto", 26, "bold") # Changed font to Roboto, Larger and bolder title
         )
         app_title_label.pack(anchor="w", pady=(0, 8)) # Increased pady below title
 
         app_version_label = ctk.CTkLabel(
             app_info_content,
             text=f"Версия: {APP_VERSION}", # Use your APP_VERSION variable
-            font=("Arial", 13) # Slightly smaller version font
+            font=("Roboto", 13) # Changed font to Roboto, Slightly smaller version font
         )
         app_version_label.pack(anchor="w", pady=(0, 12)) # Increased pady below version
 
@@ -67,7 +68,7 @@ class InformationTab:
             text="ASX Hub - это приложение для оптимизации вашей системы и упрощения доступа к необходимым программам и ресурсам.\n"
                  "Оно предоставляет инструменты для настройки системы, загрузки полезных программ и быстрый доступ к веб-ресурсам.\n"
                  "Разработано для удобства и повышения продуктивности.",
-            font=("Arial", 12),
+            font=("Roboto", 12), # Changed font to Roboto
             justify="left",
             text_color=("gray60", "gray70") # Even bleaker description color
         )
@@ -88,21 +89,21 @@ class InformationTab:
         dev_title_label = ctk.CTkLabel(
             dev_info_content,
             text="Разработчик",
-            font=("Arial", 20, "bold") # Slightly larger title
+            font=("Roboto", 20, "bold") # Changed font to Roboto, Slightly larger title
         )
         dev_title_label.pack(anchor="w", pady=(0, 10))
 
         dev_name_label = ctk.CTkLabel(
             dev_info_content,
             text="ALFiX.inc", # Replace with your name
-            font=("Arial", 12)
+            font=("Roboto", 12) # Changed font to Roboto
         )
         dev_name_label.pack(anchor="w", pady=(0, 3)) # Reduced pady
 
         dev_contact_label = ctk.CTkLabel(
             dev_info_content,
             text="Discord.GG/ALFiX-Zone", # Replaced email with Discord invite link text
-            font=("Arial", 12),
+            font=("Roboto", 12), # Changed font to Roboto
             text_color=("skyblue3", "lightblue") # Slightly brighter link color
         )
         dev_contact_label.pack(anchor="w")
@@ -124,7 +125,7 @@ class InformationTab:
         links_title_label = ctk.CTkLabel(
             links_content,
             text="Ссылки",
-            font=("Arial", 20, "bold") # Slightly larger title
+            font=("Roboto", 20, "bold") # Changed font to Roboto, Slightly larger title
         )
         links_title_label.pack(anchor="w", pady=(0, 10))
 
@@ -134,7 +135,8 @@ class InformationTab:
             command=lambda: webbrowser.open("https://github.com/ALFiX01/ASX-python"), # Replace with your repo URL
             width=160, # Slightly wider button
             height=36, # Slightly taller button
-            corner_radius=8
+            corner_radius=8,
+            font=("Roboto", 12) # Changed font to Roboto for button text
         )
         github_button.pack(anchor="w", pady=(0, 8)) # Increased pady below button
 
@@ -144,7 +146,8 @@ class InformationTab:
             command=lambda: webbrowser.open("https://your-website.com"), # Replace with your website URL or remove if not applicable
             width=220, # Slightly wider button
             height=36, # Slightly taller button
-            corner_radius=8
+            corner_radius=8,
+            font=("Roboto", 12) # Changed font to Roboto for button text
         )
         website_button.pack(anchor="w")
 
@@ -163,28 +166,28 @@ class InformationTab:
         system_title_label = ctk.CTkLabel(
             system_info_content,
             text="Системная информация",
-            font=("Arial", 20, "bold") # Slightly larger title
+            font=("Roboto", 20, "bold") # Changed font to Roboto, Slightly larger title
         )
         system_title_label.pack(anchor="w", pady=(0, 10))
 
         os_label = ctk.CTkLabel(
             system_info_content,
             text=f"Операционная система: {platform.system()} {platform.platform()}",
-            font=("Arial", 12)
+            font=("Roboto", 12) # Changed font to Roboto
         )
         os_label.pack(anchor="w", pady=(0, 2))
 
         python_label = ctk.CTkLabel(
             system_info_content,
             text=f"Версия Python: {sys.version.split()[0]}", # Show only major.minor.micro version
-            font=("Arial", 12)
+            font=("Roboto", 12) # Changed font to Roboto
         )
         python_label.pack(anchor="w", pady=(0, 2))
 
         ctk_label = ctk.CTkLabel(
             system_info_content,
             text=f"Версия CustomTkinter: {ctk.__version__}",
-            font=("Arial", 12)
+            font=("Roboto", 12) # Changed font to Roboto
         )
         ctk_label.pack(anchor="w", pady=(0, 8)) # Increased pady
 
@@ -194,7 +197,7 @@ class InformationTab:
         cpu_label = ctk.CTkLabel(
             system_info_content,
             text=f"Процессор (CPU): {cpu_name}",
-            font=("Arial", 12)
+            font=("Roboto", 12) # Changed font to Roboto
         )
         cpu_label.pack(anchor="w", pady=(0, 2))
 
@@ -213,7 +216,7 @@ class InformationTab:
         gpu_label = ctk.CTkLabel(
             system_info_content,
             text=gpu_info_text,
-            font=("Arial", 12)
+            font=("Roboto", 12) # Changed font to Roboto
         )
         gpu_label.pack(anchor="w", pady=(0, 2))
 
@@ -222,7 +225,7 @@ class InformationTab:
         ram_label = ctk.CTkLabel(
             system_info_content,
             text=f"Оперативная память (RAM): {ram_gb:.2f} ГБ", # Format to 2 decimal places
-            font=("Arial", 12)
+            font=("Roboto", 12) # Changed font to Roboto
         )
         ram_label.pack(anchor="w")
 

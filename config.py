@@ -10,6 +10,9 @@ from utils.tweaks.spectre_meltdown import SpectreMeltdownTweak
 GITHUB_API_URL = "https://api.github.com"
 GITHUB_DOWNLOAD_FOLDER = "downloads"
 
+# App Ver
+APP_VERSION = "0.0.05"
+
 # Registry paths
 REGISTRY_PATHS = {
     "services": r"SYSTEM\CurrentControlSet\Services",
@@ -96,6 +99,12 @@ TWEAKS = [
         'key': 'cortana',
         'class_name': 'CortanaTweak',
         'module': 'cortana',
+        'category': "Оптимизация и настройки",
+    },
+    {
+        'key': 'fastboot',
+        'class_name': 'FastBootTweak',
+        'module': 'fastboot',
         'category': "Оптимизация и настройки",
     },
 ]
