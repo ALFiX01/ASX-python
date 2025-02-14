@@ -1,16 +1,32 @@
 import os
+import json
 import tkinter as tk
 try:
     import customtkinter as ctk
 except ImportError:
-    print("Error: CustomTkinter not found.  Please install it using: pip install customtkinter")
+    print("Error: CustomTkinter not found. Please install it using: pip install customtkinter")
     import sys
     sys.exit(1)
 from tkinter import messagebox
 
-# from utils.github_handler import GitHubHandler  # Assuming you have this -  SEE IMPORTANT NOTE BELOW
+def load_settings(settings_file="settings.json"):
+    """Loads settings from a JSON file."""
+    try:
+        with open(settings_file, "r") as f:
+            settings = json.load(f)
+            return settings
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading settings: {e}. Using default settings.")
+        return {
+            "appearance_mode": "System",
+            "theme": "blue",
+            "language": "Russian",
+            "accent_color": "#1f6aa5"  # Default accent color
+        }
 
-# IMPORTANT NOTE:  For testing/running this code directly, replace the above line with:
+# from utils.github_handler import GitHubHandler  # Assuming you have this - SEE IMPORTANT NOTE BELOW
+
+# IMPORTANT NOTE: For testing/running this code directly, replace the above line with:
 class GitHubHandler:  # Dummy GitHubHandler for standalone testing
     def __init__(self):
         self.download_folder = "downloads"  # Create a 'downloads' folder in the same directory
@@ -28,22 +44,28 @@ class UtilitiesTab:
     def __init__(self, parent):
         self.parent = parent
         self.github_handler = GitHubHandler()
-        self.is_searching = False # Track search state
+        self.is_searching = False  # Track search state
 
-        # --- Search Frame ---  (Copied from ProgramsTab and adjusted placeholder)
+        # Load settings
+        settings = load_settings()
+
+        # Define accent color from settings
+        self.accent_color = settings.get("accent_color", "#FF5733")  # Default to a color if not found
+
+        # --- Search Frame --- (Copied from ProgramsTab and adjusted placeholder)
         self.search_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
-        self.search_frame.pack(fill="x", padx=20, pady=(10, 5)) # Increased padx to 20 for better alignment
+        self.search_frame.pack(fill="x", padx=20, pady=(10, 5))  # Increased padx to 20 for better alignment
 
         self.search_entry = ctk.CTkEntry(
             self.search_frame,
-            placeholder_text="Поиск утилит...", # Adjusted placeholder text
+            placeholder_text="Поиск утилит...",  # Adjusted placeholder text
             width=200,
-            height=35,
+            height=40,
             corner_radius=8,
             border_width=2,
             fg_color=("gray85", "gray17"),
-            border_color = "gray25",
-            font=("Roboto", 12) # Added Roboto font
+            border_color="gray25",
+            font=("Roboto", 14)  # Added Roboto font
         )
         self.search_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
         self.search_entry.bind("<KeyRelease>", self.filter_utilities)
@@ -51,30 +73,24 @@ class UtilitiesTab:
         self.search_entry.bind("<FocusIn>", self.start_search)
         self.search_entry.bind("<FocusOut>", self.end_search)
 
-
         # === Utilities List Frame (Scrollable) ===
         self.utilities_frame = ctk.CTkScrollableFrame(
             self.parent,
             fg_color="transparent"
         )
-        self.utilities_frame.pack(fill="both", expand=True, padx=20, pady=10) # Increased padx to 20 for better alignment
+        self.utilities_frame.pack(fill="both", expand=True, padx=20, pady=(5, 10))  # Increased padx to 20 for better alignment
 
         self.utilities = [  # Store utilities as a list of tuples
             ("CPU-Z", "Информация о процессоре и системе"),
             ("HWiNFO", "Мониторинг системы"),
             ("MSI Afterburner", "Разгон видеокарты"),
             ("CCleaner", "Очистка системы"),
-            ("CrystalDiskInfo", "Мониторинг состояния жестких дисков"),
-            ("MemTest64", "Тестирование оперативной памяти"),
-            ("FurMark", "Тестирование видеокарты"),
-            ("Rivatuner Statistics Server", "Отображение FPS и системной информации в играх"),
         ]
-        # --- Optimization:  Create utility widgets once and hide/show them ---
+        # --- Optimization: Create utility widgets once and hide/show them ---
         self.utility_widgets = {}  # Dictionary to store utility frames
         self.create_utility_widgets()
-        self.original_utilities = self.utilities.copy() # Copy of the original list
-        self.setup_utilities_list() # Initial display
-
+        self.original_utilities = self.utilities.copy()  # Copy of the original list
+        self.setup_utilities_list()  # Initial display
 
     def create_utility_widgets(self):
         """Creates all utility widgets initially and stores them."""
@@ -82,23 +98,23 @@ class UtilitiesTab:
             utility_frame = ctk.CTkFrame(
                 self.utilities_frame,
                 fg_color=("gray86", "gray17"),  # Lighter background
-                corner_radius=10, # Унифицировано с ProgramsTab
+                corner_radius=10,  # Унифицировано с ProgramsTab
                 border_width=0,  # No border for cleaner look
             )
-            utility_frame.bind("<Enter>", lambda e, f=utility_frame: self.on_utility_hover(e, f)) # Hover effect
-            utility_frame.bind("<Leave>", lambda e, f=utility_frame: self.on_utility_leave(e, f)) # Hover effect
+            utility_frame.bind("<Enter>", lambda e, f=utility_frame: self.on_utility_hover(e, f))  # Hover effect
+            utility_frame.bind("<Leave>", lambda e, f=utility_frame: self.on_utility_leave(e, f))  # Hover effect
             # --- Don't pack here yet ---
 
             content_frame = ctk.CTkFrame(utility_frame, fg_color="transparent")
-            content_frame.pack(fill="x", padx=15, pady=15) # Унифицировано с ProgramsTab
+            content_frame.pack(fill="x", padx=15, pady=15)  # Унифицировано с ProgramsTab
 
             icon_label = ctk.CTkLabel(
                 content_frame,
-                text="🔧",  #  Slightly smaller icon
-                font=("Roboto", 24),  #  Унифицировано с ProgramsTab, уменьшен шрифт, Changed to Roboto
+                text="🔧",  # Slightly smaller icon
+                font=("Roboto", 28),  # Унифицировано с ProgramsTab, уменьшен шрифт, Changed to Roboto
                 text_color=("gray50", "gray70")
             )
-            icon_label.pack(side="left", padx=(0, 10)) # Reduced padding, унифицировано с ProgramsTab
+            icon_label.pack(side="left", padx=(0, 10))  # Reduced padding, унифицировано с ProgramsTab
 
             text_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
             text_frame.pack(side="left", fill="x", expand=True)
@@ -106,15 +122,15 @@ class UtilitiesTab:
             name_label = ctk.CTkLabel(
                 text_frame,
                 text=name,
-                font=("Roboto", 14, "bold")  #  Унифицировано с ProgramsTab, уменьшен шрифт, Changed to Roboto
+                font=("Roboto", 14, "bold")  # Унифицировано с ProgramsTab, уменьшен шрифт, Changed to Roboto
             )
             name_label.pack(anchor="w")
 
             desc_label = ctk.CTkLabel(
                 text_frame,
                 text=description,
-                font=("Roboto", 12), # Changed to Roboto
-                text_color=("gray50", "gray60") # Оставил цвет как был, можно унифицировать с ProgramsTab если нужно
+                font=("Roboto", 12),  # Changed to Roboto
+                text_color=("gray50", "gray60")  # Оставил цвет как был, можно унифицировать с ProgramsTab если нужно
             )
             desc_label.pack(anchor="w")
 
@@ -126,14 +142,13 @@ class UtilitiesTab:
                 width=100,
                 height=32,
                 corner_radius=8,
-                fg_color="#4CAF50", # Унифицировано с ProgramsTab
-                hover_color="#66BB6A", # Унифицировано с ProgramsTab
-                font=("Roboto", 12) # Added Roboto font to button text
+                fg_color=self.accent_color,  # Use the accent color
+                hover_color=self.accent_color,  # Same color on hover
+                font=("Roboto", 12)  # Added Roboto font to button text
             )
             action_button.pack(side="right", padx=5)
-            action_button.bind("<Enter>", lambda e, b=action_button: b.configure(fg_color="#66BB6A")) # Hover effect
-            action_button.bind("<Leave>", lambda e, b=action_button: b.configure(fg_color="#4CAF50")) # Hover effect
-
+            action_button.bind("<Enter>", lambda e, b=action_button: b.configure(fg_color="#66BB6A"))  # Hover effect
+            action_button.bind("<Leave>", lambda e, b=action_button: b.configure(fg_color=self.accent_color))  # Hover effect
 
             # --- Store the frame in the dictionary, keyed by utility name ---
             self.utility_widgets[name] = utility_frame
@@ -145,9 +160,9 @@ class UtilitiesTab:
         for frame in self.utility_widgets.values():
             frame.pack_forget()  # Hide all frames initially
 
-        for name, _ in self.utilities: # Iterate through the current list (filtered or original).
+        for name, _ in self.utilities:  # Iterate through the current list (filtered or original).
             if name in self.utility_widgets:  # Check needed for safety
-                self.utility_widgets[name].pack(fill="x", padx=10, pady=5) # Унифицировано с ProgramsTab
+                self.utility_widgets[name].pack(fill="x", padx=10, pady=5)  # Унифицировано с ProgramsTab
 
     def start_search(self, _=None):
         """Indicates that a search is in progress."""
@@ -162,10 +177,7 @@ class UtilitiesTab:
     def update_search_entry_border_color(self, _=None):
         """Updates the search entry border color."""
         if self.is_searching:
-            accent_color = ctk.ThemeManager.theme["CTkButton"]["fg_color"]
-            if isinstance(accent_color, tuple):
-                accent_color = accent_color[ctk.AppearanceModeTracker.get_mode()]
-            self.search_entry.configure(border_color=accent_color)
+            self.search_entry.configure(border_color=self.accent_color)
         elif ctk.AppearanceModeTracker.get_mode() == 1:  # Dark
             self.search_entry.configure(border_color="gray25")
         else:  # Light
@@ -181,8 +193,8 @@ class UtilitiesTab:
             self.install_utility(utility_name)
 
     def install_utility(self, utility_name):
-        # github_url = f"https://github.com/example/{utility_name.lower()}"  #  REPLACE with your actual repos
-        github_url = f"https://github.com/example/{utility_name.lower()}" # Placeholder
+        # github_url = f"https://github.com/example/{utility_name.lower()}"  # REPLACE with your actual repos
+        github_url = f"https://github.com/example/{utility_name.lower()}"  # Placeholder
         filename = f"{utility_name.lower()}_setup.exe"
         downloaded_file = self.github_handler.download_release(github_url, filename)
         if downloaded_file:
@@ -202,7 +214,6 @@ class UtilitiesTab:
         except Exception as e:
             self.show_message(f"Ошибка при запуске {utility_name}: {str(e)}")
 
-
     def update_utility_button(self, utility_name):
         """Updates the button text after installation."""
         if utility_name in self.utility_widgets:
@@ -220,9 +231,8 @@ class UtilitiesTab:
         frame.configure(border_width=0)
         frame.configure(fg_color=("gray86", "gray17"))
 
-
     def show_message(self, message):
-        messagebox.showinfo(title="Сообщение", message=message, font=("Roboto", 12)) # Added Roboto font
+        messagebox.showinfo(title="Сообщение", message=message, font=("Roboto", 12))  # Added Roboto font
 
     def filter_utilities(self, event):
         """Filters the utilities list based on the search term."""
@@ -230,7 +240,7 @@ class UtilitiesTab:
         self.update_search_entry_border_color()
 
         if not search_term:
-            self.utilities = self.original_utilities.copy() # Restore original
+            self.utilities = self.original_utilities.copy()  # Restore original
             self.setup_utilities_list()
             return
 
@@ -243,14 +253,12 @@ class UtilitiesTab:
     def clear_search(self):
         """Clears the search entry and shows all utilities."""
         self.search_entry.delete(0, tk.END)
-        self.utilities = self.original_utilities.copy() # Restore to original
+        self.utilities = self.original_utilities.copy()  # Restore to original
         self.setup_utilities_list()
-
-
 
 if __name__ == "__main__":
     app = ctk.CTk()
     app.title("Utilities Tab Example")
-    app.geometry("800x700")  #  Adjust as needed
+    app.geometry("1050x800")  # Adjust as needed
     utilities_tab = UtilitiesTab(app)
     app.mainloop()

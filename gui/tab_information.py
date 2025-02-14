@@ -131,12 +131,12 @@ class InformationTab:
 
         github_button = ctk.CTkButton(
             links_content,
-            text="GitHub Репозиторий",
+            text="GitHub",
             command=lambda: webbrowser.open("https://github.com/ALFiX01/ASX-python"), # Replace with your repo URL
-            width=160, # Slightly wider button
-            height=36, # Slightly taller button
+            width=100, # Slightly wider button
+            height=28, # Slightly taller button
             corner_radius=8,
-            font=("Roboto", 12) # Changed font to Roboto for button text
+            font=("Roboto", 13) # Changed font to Roboto for button text
         )
         github_button.pack(anchor="w", pady=(0, 8)) # Increased pady below button
 
@@ -144,10 +144,10 @@ class InformationTab:
             links_content,
             text="Поддержка",
             command=lambda: webbrowser.open("https://your-website.com"), # Replace with your website URL or remove if not applicable
-            width=220, # Slightly wider button
-            height=36, # Slightly taller button
+            width=100, # Slightly wider button
+            height=28, # Slightly taller button
             corner_radius=8,
-            font=("Roboto", 12) # Changed font to Roboto for button text
+            font=("Roboto", 13) # Changed font to Roboto for button text
         )
         website_button.pack(anchor="w")
 
@@ -273,7 +273,7 @@ class InformationTab:
 if __name__ == "__main__":
     app = ctk.CTk()
     app.title("Information Tab Example")
-    app.geometry("800x700")
+    app.geometry("1050x800")
 
     information_tab = InformationTab(app) # You would usually create this tab within your main app
 

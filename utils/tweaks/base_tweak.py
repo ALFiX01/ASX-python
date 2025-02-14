@@ -1,4 +1,3 @@
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
@@ -8,6 +7,7 @@ class TweakMetadata:
     title: str
     description: str
     category: str
+    russian_name: str = ""  # Russian name for status bar
 
 class BaseTweak(ABC):
     @property

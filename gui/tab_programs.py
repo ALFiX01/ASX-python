@@ -1,9 +1,10 @@
 import os
+import json
 import tkinter as tk
 try:
     import customtkinter as ctk
 except ImportError:
-    print("Error: CustomTkinter not found.  Please install it using: pip install customtkinter")
+    print("Error: CustomTkinter not found. Please install it using: pip install customtkinter")
     import sys
     sys.exit(1)
 from tkinter import messagebox, ttk
@@ -14,6 +15,21 @@ import threading
 from PIL import Image, ImageTk
 import re
 
+def load_settings(settings_file="settings.json"):
+    """Loads settings from a JSON file."""
+    try:
+        with open(settings_file, "r") as f:
+            settings = json.load(f)
+            return settings
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading settings: {e}. Using default settings.")
+        return {
+            "appearance_mode": "System",
+            "theme": "blue",
+            "language": "Russian",
+            "accent_color": "#1f6aa5"  # Default accent color
+        }
+
 class ProgramsTab:
     def __init__(self, parent):
         self.parent = parent
@@ -23,20 +39,26 @@ class ProgramsTab:
         self.all_program_frames = []
         self.is_searching = False  # Track search state
 
+        # Load settings
+        settings = load_settings()
+
+        # Define accent color from settings
+        self.accent_color = settings.get("accent_color", "#FF5733")  # Default to a color if not found
+
         # --- Search Frame ---
         self.search_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
-        self.search_frame.pack(fill="x", padx=20, pady=(10, 5)) # Increased padx to 20 for better alignment
+        self.search_frame.pack(fill="x", padx=20, pady=(10, 5))  # Increased padx to 20 for better alignment
 
         self.search_entry = ctk.CTkEntry(
             self.search_frame,
             placeholder_text="Поиск программ...",
             width=200,
-            height=35,
+            height=40,
             corner_radius=8,
             border_width=2,
             fg_color=("gray85", "gray17"),
-            border_color = "gray25",
-            font=("Roboto", 12) # Added Roboto font
+            border_color="gray25",
+            font=("Roboto", 14)  # Added Roboto font
         )
         self.search_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
         self.search_entry.bind("<KeyRelease>", self.search_programs)
@@ -44,10 +66,9 @@ class ProgramsTab:
         self.search_entry.bind("<FocusIn>", self.start_search)
         self.search_entry.bind("<FocusOut>", self.end_search)
 
-
         # --- Programs Frame ---
         self.programs_frame = ctk.CTkScrollableFrame(self.parent, fg_color="transparent")
-        self.programs_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10)) # Increased padx to 20 for better alignment
+        self.programs_frame.pack(fill="both", expand=True, padx=20, pady=(5, 10))  # Increased padx to 20 for better alignment
 
         self.programs = [
             ("Chrome", "Веб-браузер от Google", "ChromeSetup.exe", "https://dl.google.com/chrome/install/latest/chrome_installer.exe", "browser_icon.png"),
@@ -81,12 +102,12 @@ class ProgramsTab:
         program_frame = ctk.CTkFrame(
             self.programs_frame,
             fg_color=("gray86", "gray17"),
-            corner_radius=10, # унифицировано с UtilitiesTab
+            corner_radius=10,  # Унифицировано с UtilitiesTab
             border_width=0,
         )
         program_frame.program_data = program  # Сохраняем данные программы
-        program_frame.bind("<Enter>", lambda e, f=program_frame: self.on_program_hover(e, f)) # Hover effect
-        program_frame.bind("<Leave>", lambda e, f=program_frame: self.on_program_leave(e, f)) # Hover effect
+        program_frame.bind("<Enter>", lambda e, f=program_frame: self.on_program_hover(e, f))  # Hover effect
+        program_frame.bind("<Leave>", lambda e, f=program_frame: self.on_program_leave(e, f))  # Hover effect
 
         content_frame = ctk.CTkFrame(program_frame, fg_color="transparent")
         content_frame.pack(fill="x", padx=15, pady=15)
@@ -95,29 +116,29 @@ class ProgramsTab:
             icon = ctk.CTkImage(Image.open(os.path.join("icons", icon_path)), size=(48, 48))
             icon_label = ctk.CTkLabel(content_frame, image=icon, text="")
             icon_label.image = icon
-            icon_label.pack(side="left", padx=(0, 10)) # Reduced padx to 10 for better alignment
+            icon_label.pack(side="left", padx=(0, 10))  # Reduced padx to 10 for better alignment
         except Exception:
-            icon_label = ctk.CTkLabel(content_frame, text="📦", font=("Roboto", 24), text_color=("gray50", "gray70")) # Changed font to Roboto, унифицировано с UtilitiesTab, уменьшен шрифт
-            icon_label.pack(side="left", padx=(0, 10)) # Reduced padx to 10 for better alignment
+            icon_label = ctk.CTkLabel(content_frame, text="📦", font=("Roboto", 24), text_color=("gray50", "gray70"))  # Changed font to Roboto, унифицировано с UtilitiesTab, уменьшен шрифт
+            icon_label.pack(side="left", padx=(0, 10))  # Reduced padx to 10 for better alignment
 
         text_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         text_frame.pack(side="left", fill="x", expand=True)
 
-        name_label = ctk.CTkLabel(text_frame, text=name, font=("Roboto", 14, "bold")) # Changed font to Roboto, унифицировано с UtilitiesTab, уменьшен шрифт
+        name_label = ctk.CTkLabel(text_frame, text=name, font=("Roboto", 14, "bold"))  # Changed font to Roboto, унифицировано с UtilitiesTab, уменьшен шрифт
         name_label.pack(anchor="w")
 
         desc_label = ctk.CTkLabel(
             text_frame,
             text=description,
-            font=("Roboto", 12), # Changed font to Roboto
-            text_color=("#7E7E7E"), # Оставил цвет как был, можно унифицировать с UtilitiesTab если нужно
+            font=("Roboto", 12),  # Changed font to Roboto
+            text_color=("#7E7E7E"),  # Оставил цвет как был, можно унифицировать с UtilitiesTab если нужно
         )
         desc_label.pack(anchor="w")
 
         style = ttk.Style(content_frame)
         style.theme_use('clam')
-        style.configure("Horizontal.TProgressbar", troughcolor='#f0f0f0', background='#4CAF50', thickness=8,
-                        troughrelief='flat', relief='flat', lightcolor='#4CAF50', darkcolor='#4CAF50', borderwidth=0)
+        style.configure("Horizontal.TProgressbar", troughcolor='#f0f0f0', background=self.accent_color, thickness=8,
+                        troughrelief='flat', relief='flat', lightcolor=self.accent_color, darkcolor=self.accent_color, borderwidth=0)
         progressbar = ttk.Progressbar(content_frame, orient="horizontal", length=200, mode="determinate", style="Horizontal.TProgressbar")
         progressbar.pack(fill="x", padx=5, pady=5, anchor="s")
         progressbar.pack_forget()
@@ -131,14 +152,13 @@ class ProgramsTab:
             width=100,
             height=32,
             corner_radius=8,
-            fg_color="#4CAF50",
-            hover_color="#66BB6A",
-            font=("Roboto", 12) # Added Roboto font to button text
+            fg_color=self.accent_color,  # Use the accent color
+            hover_color=self.accent_color,  # Same color on hover
+            font=("Roboto", 13)  # Added Roboto font to button text
         )
         download_button.pack(side="right", padx=5)
-        download_button.bind("<Enter>", lambda e, b=download_button: b.configure(fg_color="#66BB6A"))
-        download_button.bind("<Leave>", lambda e, b=download_button: b.configure(fg_color="#4CAF50"))
-
+        download_button.bind("<Enter>", lambda e, b=download_button: b.configure(fg_color="#66BB6A"))  # Hover effect
+        download_button.bind("<Leave>", lambda e, b=download_button: b.configure(fg_color=self.accent_color))  # Hover effect
 
         return program_frame
 
@@ -155,15 +175,11 @@ class ProgramsTab:
     def update_search_entry_border_color(self, _=None):
         """Updates the search entry border color."""
         if self.is_searching:
-            accent_color = ctk.ThemeManager.theme["CTkButton"]["fg_color"]
-            if isinstance(accent_color, tuple):
-                accent_color = accent_color[ctk.AppearanceModeTracker.get_mode()]
-            self.search_entry.configure(border_color=accent_color)
+            self.search_entry.configure(border_color=self.accent_color)
         elif ctk.AppearanceModeTracker.get_mode() == 1:  # Dark
             self.search_entry.configure(border_color="gray25")
         else:  # Light
             self.search_entry.configure(border_color="gray70")
-
 
     def search_programs(self, event=None):
         """Filters programs with regex and caching, optimized for speed."""
@@ -177,13 +193,13 @@ class ProgramsTab:
             return
 
         if search_text in self.search_cache:
-            if self.search_cache[search_text] is not None: # Check for valid cached results
+            if self.search_cache[search_text] is not None:  # Check for valid cached results
                 self.search_results = self.search_cache[search_text]
                 self.setup_programs_list(self.search_results)
                 return
 
         try:
-            # Compile the regular expression for efficiency.  This is the key optimization.
+            # Compile the regular expression for efficiency. This is the key optimization.
             self.compiled_search_term = re.compile(search_text)
             self.search_results = [
                 program for program in self.programs
@@ -194,10 +210,9 @@ class ProgramsTab:
 
         except re.error:
             # Handle invalid regex (e.g., unmatched parenthesis)
-            self.search_cache[search_text] = None # store None on regex error.
-            messagebox.showerror("Regex Error", "Invalid regular expression.", font=("Roboto", 12)) # Added font to messagebox
+            self.search_cache[search_text] = None  # Store None on regex error.
+            messagebox.showerror("Regex Error", "Invalid regular expression.", font=("Roboto", 12))  # Added font to messagebox
             return
-
 
     def setup_programs_list(self, programs_to_display):
         for frame in self.all_program_frames:
@@ -296,7 +311,7 @@ class ProgramsTab:
             self.show_message(f"Произошла непредвиденная ошибка: {e}")
 
     def show_message(self, message):
-        messagebox.showinfo(title="Сообщение", message=message, font=("Roboto", 12)) # Added font to messagebox
+        messagebox.showinfo(title="Сообщение", message=message, font=("Roboto", 12))  # Added font to messagebox
 
     def on_program_hover(self, event, frame):
         frame.configure(border_width=2, border_color="#56a6db")
@@ -306,11 +321,10 @@ class ProgramsTab:
         frame.configure(border_width=0)
         frame.configure(fg_color=("gray86", "gray17"))
 
-
 if __name__ == "__main__":
     app = ctk.CTk()
     app.title("Программы")
-    app.geometry("800x700")
+    app.geometry("1050x800")
 
     if not os.path.exists("icons"):
         os.makedirs("icons")

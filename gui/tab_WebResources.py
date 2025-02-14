@@ -1,17 +1,39 @@
 import os
+import json
 import tkinter as tk
 try:
     import customtkinter as ctk
 except ImportError:
-    print("Error: CustomTkinter not found.  Please install it using: pip install customtkinter")
+    print("Error: CustomTkinter not found. Please install it using: pip install customtkinter")
     import sys
     sys.exit(1)
 from tkinter import messagebox
 import webbrowser
 
+def load_settings(settings_file="settings.json"):
+    """Loads settings from a JSON file."""
+    try:
+        with open(settings_file, "r") as f:
+            settings = json.load(f)
+            return settings
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading settings: {e}. Using default settings.")
+        return {
+            "appearance_mode": "System",
+            "theme": "blue",
+            "language": "Russian",
+            "accent_color": "#1f6aa5"  # Default accent color
+        }
+
 class WebResourcesTab:
     def __init__(self, parent):
         self.parent = parent
+
+        # Load settings
+        settings = load_settings()
+
+        # Define accent color from settings
+        self.accent_color = settings.get("accent_color", "#FF5733")  # Default to a color if not found
 
         # === Web Resources List Frame (Scrollable) ===
         self.web_resources_frame = ctk.CTkScrollableFrame(
@@ -95,8 +117,9 @@ class WebResourcesTab:
                 width=100,
                 height=32,
                 corner_radius=8,
-                fg_color=("#4CAF50", "#388E3C"),  # Use a more standard "action" color (green)
-                hover_color=("#66BB6A", "#43A047") # Darker green on hover
+                fg_color=self.accent_color,  # Use the accent color
+                hover_color=self.accent_color, # Same color on hover
+                font = ("Roboto", 13)
             )
             open_button.pack(side="right", padx=(10, 0))  # Add some left padding
 
@@ -122,7 +145,7 @@ if __name__ == "__main__":
 
     app = ctk.CTk()
     app.title("Web Resources Tab Example")
-    app.geometry("800x600")  # Slightly adjusted size
+    app.geometry("1050x800")  # Slightly adjusted size
 
     web_resources_tab = WebResourcesTab(app)
 
