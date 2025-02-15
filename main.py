@@ -19,6 +19,7 @@ from gui.tab_drivers import DriverTab
 from gui.tab_WebResources import WebResourcesTab
 from gui.tab_information import InformationTab
 from gui.tab_settings import SettingsTab
+from gui.tab_home import HomeCenter  # Import the HomeCenter class
 
 from config import APP_VERSION
 
@@ -375,54 +376,33 @@ class ASXHub(ctk.CTk):
         self.tabview.pack(fill="both", expand=True)
 
         # Добавляем вкладки
+        self.tab_home = self.tabview.add("Главная")  # Добавляем вкладку "Главная"
         self.tab_tweaks = self.tabview.add("Твики")
         self.tab_programs = self.tabview.add("Программы")
         self.tab_utilities = self.tabview.add("Утилиты")
-        self.tab_drivers = self.tabview.add("Драйверы")
+        self.tab_drivers = self.tabview.add("Драйвера")
         self.tab_web = self.tabview.add("Веб-ресурсы")
         self.tab_info = self.tabview.add("Информация")
-        self.tab_settings = self.tabview.add("Настройка")
-
-        # Настраиваем панель переключения вкладок:
-        accent_color = self.settings.get("accent_color", "#1f6aa5")
-        panel_bg_color = "#444444"      # фон панели
-        button_bg_color = "#444444"     # фон невыбранной кнопки
-        button_hover_color = "#666666"  # фон при наведении
-        text_color = "white"
-        border_color = "#222222"
-
-        try:
-            self.tabview._segmented_button.configure(
-                fg_color=panel_bg_color,
-                button_color=button_bg_color,
-                button_hover_color=button_hover_color,
-                text_color=text_color,
-                selected_button_color=accent_color,
-                selected_hover_color=accent_color,
-                selected_text_color=text_color,
-                corner_radius=8,
-                border_width=1,
-                border_color=border_color,
-                text_font=("Helvetica", 12, "bold")
-            )
-            self.tabview._segmented_button.update_idletasks()
-        except Exception as e:
-            logging.error(f"Error applying accent color to tabview: {e}")
+        self.tab_settings = self.tabview.add("Настройки")
 
         # Инициализируем содержимое вкладок
+        self.home_tab = HomeCenter(self.tab_home)  # Инициализируем вкладку "Главная"
         self.tweaks_tab = TweaksTab(self.tab_tweaks)
         self.programs_tab = ProgramsTab(self.tab_programs)
         self.utilities_tab = UtilitiesTab(self.tab_utilities)
-        self.driver_tab = DriverTab(self.tab_drivers, self.dynamic_status)  # Pass the status bar here
+        self.settings_tab = SettingsTab(self.tab_settings)
         self.web_resources_tab = WebResourcesTab(self.tab_web)
         self.information_tab = InformationTab(self.tab_info)
-        self.settings_tab = SettingsTab(self.tab_settings)
 
+        # Важно: Инициализируем статусбар *ДО* создания DriverTab
         default_status = f"ASX Hub v{APP_VERSION} | {'Администратор' if is_admin() else 'Обычный пользователь'}"
         self.dynamic_status = DynamicStatusBar(self.main_container, default_text=default_status, height=25)
         self.dynamic_status.pack(fill="x", pady=(6, 0))
-
         set_status_bar_instance(self.dynamic_status)
+
+        # *ПОСЛЕ* создания статусбара передаём его в DriverTab
+        self.driver_tab = DriverTab(self.tab_drivers, self.dynamic_status)
+
         self.dynamic_status.update_text("Добро пожаловать в ASX Hub!", duration=3000)
 
     def load_and_apply_settings(self):
@@ -445,7 +425,7 @@ class ASXHub(ctk.CTk):
         """Создает файл настроек с значениями по умолчанию."""
         default_settings = {
             "theme": "blue",
-            "appearance_mode": "Light",
+            "appearance_mode": "Dark",
             "accent_color": "#1f6aa5"
         }
         try:

@@ -1,0 +1,7 @@
+{
+    "alderlakepch-ssystem.inf": "Драйвер чипсета PCH для Intel Alder Lake, обеспечивающий работу материнской платы.",
+    "alderlakesystem.inf": "Системный драйвер для процессоров Intel Alder Lake, поддерживающий их корректное функционирование.",
+    "heci.inf": "Драйвер Intel Management Engine Interface для связи системы с встроенным контроллером управления.",
+    "hideventfilter.inf": "Драйвер для управления событиями устройств ввода, таких как клавиатура и мышь.",
+    "ialpss2_gpio2_adl.inf": "Драйвер GPIO для Intel Alder Lake, позволяющий управлять портами ввода/вывода."
+}

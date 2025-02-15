@@ -4,10 +4,11 @@ from typing import Optional
 
 @dataclass
 class TweakMetadata:
-    title: str
-    description: str
-    category: str
-    russian_name: str = ""  # Russian name for status bar
+    def __init__(self, title, description, category, warning=None):  # Добавили warning=None
+        self.title = title
+        self.description = description
+        self.category = category
+        self.warning = warning  # Добавили атрибут warning
 
 class BaseTweak(ABC):
     @property

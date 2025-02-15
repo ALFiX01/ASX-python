@@ -4,35 +4,31 @@ import sys
 import threading
 import tkinter as tk
 import asyncio
+import time
 
 try:
     import customtkinter as ctk
 except ImportError:
-    print("Error: CustomTkinter not found. Please install it using: pip install customtkinter")
+    print("Error: CustomTkinter not found. Install: pip install customtkinter")
     sys.exit(1)
 
 from config import TWEAK_CATEGORIES, TWEAKS
 from utils.system_tweaks import SystemTweaks
 
 def load_settings(settings_file="settings.json"):
-    """
-    Загружает настройки из JSON-файла.
-    При ошибке загрузки возвращает настройки по умолчанию.
-    """
+    """Loads settings from a JSON file or returns default settings."""
     try:
         with open(settings_file, "r") as f:
-            settings = json.load(f)
-            return settings
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"Error loading settings: {e}. Using default settings.")
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        print("Error loading settings. Using defaults.")
         return {
             "appearance_mode": "System",
             "theme": "blue",
             "language": "Russian",
-            "accent_color": "#1f6aa5"  # Default accent color
+            "accent_color": "#1f6aa5"
         }
 
-# Глобальная настройка темы и стиля из настроек
 settings = load_settings()
 ctk.set_appearance_mode(settings.get("appearance_mode", "System"))
 ctk.set_default_color_theme(settings.get("theme", "blue"))
@@ -41,32 +37,28 @@ def start_asyncio_loop(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
 
-# Создайте новый цикл событий и запустите его в отдельном потоке
+# Asyncio loop in a separate thread
 loop = asyncio.new_event_loop()
 threading.Thread(target=start_asyncio_loop, args=(loop,), daemon=True).start()
 
 class TweaksTab:
-    """
-    Класс для создания вкладки «Твики».
-    Здесь формируется боковая панель с категориями, область поиска и список твиков.
-    Также реализована проверка и обновление состояния твиков в отдельном потоке.
-    """
-
     def __init__(self, parent):
         self.parent = parent
         self.system_tweaks = SystemTweaks()
-        self._update_id = None
         self.current_category = None
         self.search_cache = {}
         self.is_searching = False
-        self.selected_category = None  # Текущая выбранная категория
-        self.category_buttons = {}     # Словарь кнопок по категориям
-        self.update_lock = threading.Lock()  # Lock для потокобезопасности
+        self.selected_category = None
+        self.category_buttons = {}
+        self.update_lock = threading.Lock()
+        self.visible = True
+        self.tweak_cards = {}  # Store cards by tweak_key: {tweak_key: card_frame}
+        self.status_cache = {}  # Cache tweak status: {tweak_key: (is_enabled, timestamp)}
+        self.ui_update_interval = 5000  # UI update interval (ms)
+        self._schedule_ui_update()  # Start UI updates
 
-        # Определяем акцентный цвет из настроек
         self.accent_color = settings.get("accent_color", "#FF5733")
 
-        # Настройка основного контейнера
         self.parent.grid_columnconfigure(0, weight=1)
         self.parent.grid_rowconfigure(0, weight=1)
 
@@ -75,77 +67,47 @@ class TweaksTab:
         self.main_frame.grid_columnconfigure(1, weight=1)
         self.main_frame.grid_rowconfigure(0, weight=1)
 
-        # Создание боковой панели (сайдбар)
-        self.sidebar = ctk.CTkFrame(
-            self.main_frame,
-            width=200,
-            corner_radius=10,
-            fg_color=("gray85", "gray17")
-        )
+        self.sidebar = ctk.CTkFrame(self.main_frame, width=200, corner_radius=10, fg_color=("gray85", "gray17"))
         self.sidebar.grid(row=0, column=0, sticky="ns", padx=(0, 10), pady=5)
         self._create_sidebar()
 
-        # Создание области поиска и контента
         self.content_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.content_frame.grid(row=0, column=1, sticky="nsew")
         self.content_frame.grid_rowconfigure(1, weight=1)
         self._create_search_area()
         self._create_content_area()
 
-        # Создание экземпляров твиков
-        self.tweaks = {}
-        for tweak_config in TWEAKS:
-            self.tweaks[tweak_config['key']] = self._create_tweak_data(tweak_config)
+        self.tweaks = {config["key"]: self._create_tweak_data(config) for config in TWEAKS}
 
-        # Установка категории по умолчанию
         default_category = "Оптимизация и настройки"
         if default_category in self.category_buttons:
             self.select_category(default_category, self.category_buttons[default_category])
         else:
             self.show_category(default_category)
 
+        self.parent.bind("<Visibility>", self.on_visibility_change)
+        self.parent.bind("<KeyPress-r>", self.on_key_press_r)
+        self.parent.bind("<KeyPress-R>", self.on_key_press_r)  # Case-insensitive
+
+    def on_key_press_r(self, event):
+        if self.visible:
+            self.update_status_manual()
+
     def _create_sidebar(self):
-        """Создаёт боковую панель с заголовком, разделителем и кнопками категорий."""
-        header_label = ctk.CTkLabel(
-            self.sidebar,
-            text="Категории",
-            font=("Roboto", 18, "bold"),
-            fg_color="transparent",
-            text_color=("gray10", "gray90")
-        )
+        header_label = ctk.CTkLabel(self.sidebar, text="Категории", font=("Roboto", 18, "bold"),
+                                    fg_color="transparent", text_color=("gray10", "gray90"))
         header_label.pack(pady=(10, 5), padx=10)
-
-        # Имитация разделителя с помощью CTkFrame
-        separator = ctk.CTkFrame(
-            self.sidebar,
-            height=2,
-            fg_color=("gray70", "gray30"),
-            corner_radius=1
-        )
+        separator = ctk.CTkFrame(self.sidebar, height=2, fg_color=("gray70", "gray30"), corner_radius=1)
         separator.pack(fill="x", padx=10, pady=(0, 10))
-
         for category in TWEAK_CATEGORIES:
-            btn = ctk.CTkButton(
-                self.sidebar,
-                text=category,
-                corner_radius=7,
-                fg_color="transparent",
-                hover_color=("gray70", "gray30"),
-                text_color=("gray10", "gray90"),
-                font=("Roboto", 14),
-                command=lambda c=category, b=None: None  # временная заглушка
-            )
-            btn.pack(pady=8, padx=10, fill="x")
-            btn.configure(command=lambda c=category, b=btn: self.select_category(c, b))
+            btn = ctk.CTkButton(self.sidebar, text=category, corner_radius=7, fg_color="transparent",
+                                hover_color=("gray70", "gray30"), text_color=("gray10", "gray90"), font=("Roboto", 14),
+                                command=lambda c=category, b=None: None)  # Dummy command
+            btn.pack(pady=6, padx=10, fill="x")
+            btn.configure(command=lambda c=category, b=btn: self.select_category(c, b))  # Real command
             self.category_buttons[category] = btn
 
     def select_category(self, category, button):
-        """
-        Обновляет состояние выбранной категории:
-         – изменяет цвета кнопок,
-         – сохраняет выбранную категорию,
-         – отображает соответствующий контент.
-        """
         self.selected_category = category
         for cat, btn in self.category_buttons.items():
             if cat == category:
@@ -155,385 +117,447 @@ class TweaksTab:
         self.show_category(category)
 
     def _create_search_area(self):
-        """Создаёт область поиска с полем ввода и кнопкой очистки."""
         self.search_frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
         self.search_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=(6, 7))
         self.search_frame.grid_columnconfigure(0, weight=1)
-
-        self.search_entry = ctk.CTkEntry(
-            self.search_frame,
-            placeholder_text="Поиск твиков...",
-            height=38,
-            corner_radius=8,
-            border_width=2,
-            border_color="gray25",
-            fg_color=("gray85", "gray17"),
-            font=("Roboto", 14)
-        )
+        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Поиск твиков...", height=38,
+                                        corner_radius=8, border_width=2, border_color="gray25",
+                                        fg_color=("gray85", "gray17"), font=("Roboto", 14))
         self.search_entry.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         self.search_entry.bind("<KeyRelease>", self.search_tweaks)
-        self.search_entry.bind("<FocusIn>", self.start_search)
-        self.search_entry.bind("<FocusOut>", self.end_search)
+        self.search_entry.bind("<FocusIn>", lambda e: self.update_search_entry_border_color(searching=True))
+        self.search_entry.bind("<FocusOut>", lambda e: self.update_search_entry_border_color(searching=False))
 
         button_width = 38
-        clear_btn = ctk.CTkButton(
-            self.search_frame,
-            text="✕",
-            width=button_width,
-            height=38,
-            corner_radius=8,
-            fg_color=("gray85", "gray17"),
-            hover_color=("gray70", "gray30"),
-            border_width=2,
-            border_color="gray25",
-            command=self.clear_search,
-            font=("Open Sans", 25),
-            text_color=self.accent_color
-        )
-        clear_btn.grid(row=0, column=1)
+        self.refresh_button = ctk.CTkButton(self.search_frame, text="R", width=button_width, height=38,
+                                            corner_radius=8, fg_color=("gray85", "gray17"),
+                                            hover_color=("gray70", "gray30"), border_width=2, border_color="gray25",
+                                            command=self.update_status_manual, font=("Open Sans", 16),
+                                            text_color=self.accent_color)
+        self.refresh_button.grid(row=0, column=1, padx=(0, 5))
+        clear_btn = ctk.CTkButton(self.search_frame, text="✕", width=button_width, height=38, corner_radius=8,
+                                    fg_color=("gray85", "gray17"), hover_color=("gray70", "gray30"), border_width=2,
+                                    border_color="gray25", command=self.clear_search, font=("Open Sans", 25),
+                                    text_color=self.accent_color)
+        clear_btn.grid(row=0, column=2)
 
     def _create_content_area(self):
-        """Создаёт область для отображения списка твиков."""
-        self.scrollable_content = ctk.CTkScrollableFrame(
-            self.content_frame,
-            corner_radius=10,
-            fg_color=("gray85", "gray17")
-        )
+        self.scrollable_content = ctk.CTkScrollableFrame(self.content_frame, corner_radius=10,
+                                                        fg_color=("gray85", "gray17"))
         self.scrollable_content.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
         self.content_frame.grid_columnconfigure(0, weight=1)
         self.content_frame.grid_rowconfigure(1, weight=1)
 
     def clear_search(self):
-        """Очищает поле поиска и возвращает отображение твиков для текущей категории."""
         self.search_entry.delete(0, tk.END)
         self.is_searching = False
-        if self.current_category:
-            self.setup_tweaks_page(self.current_category)
-        else:
-            self.setup_tweaks_page("Оптимизация и настройки")
+        self.show_category(self.current_category or "Оптимизация и настройки")
 
     def _create_tweak_data(self, tweak_config):
-        """
-        Создаёт словарь с данными для твика.
-        Если указан класс твика, создаётся его экземпляр, иначе используется метод из SystemTweaks.
-        """
-        tweak_data = {
-            'category': tweak_config['category'],
-            'instance': None,
-            'switch_ref': None,
-        }
-        if tweak_config['class_name']:
-            module_name = tweak_config.get('module', tweak_config['key'])
-            module = __import__(f"utils.tweaks.{module_name}", fromlist=[tweak_config['class_name']])
-            tweak_class = getattr(module, tweak_config['class_name'])
-            tweak_data['instance'] = tweak_class()
-            tweak_data['check_status_func'] = tweak_data['instance'].check_status
+        tweak_data = {"category": tweak_config["category"], "instance": None, "switch_ref": None}
+        if tweak_config["class_name"]:
+            module_name = tweak_config.get("module", tweak_config["key"])
+            module = __import__(f"utils.tweaks.{module_name}", fromlist=[tweak_config["class_name"]])
+            tweak_class = getattr(module, tweak_config["class_name"])
+            tweak_data["instance"] = tweak_class()
+            tweak_data["check_status_func"] = tweak_data["instance"].check_status
         else:
-            tweak_data['check_status_func'] = getattr(
-                self.system_tweaks, f"check_{tweak_config['key']}_status", None
-            )
-
-        tweak_data['toggle_command'] = getattr(self, f"toggle_{tweak_config['key']}", None)
-        if tweak_data['toggle_command'] is None:
-            print(f"Warning: toggle_{tweak_config['key']} method not found in TweaksTab.")
-
+            tweak_data["check_status_func"] = getattr(self.system_tweaks, f"check_{tweak_config['key']}_status", None)
+        tweak_data["toggle_command"] = getattr(self, f"toggle_{tweak_config['key']}", None)
+        if tweak_data["toggle_command"] is None:
+            print(f"Warning: toggle_{tweak_config['key']} not found in TweaksTab.")
         return tweak_data
 
-    def start_search(self, _=None):
-        """Обрабатывает начало поиска, обновляя состояние рамки поля ввода."""
-        self.is_searching = True
-        self.update_search_entry_border_color()
+    def update_search_entry_border_color(self, searching=False):
+        mode = ctk.get_appearance_mode()
+        border_color = self.accent_color if searching else ("gray70" if mode.lower() == "dark" else "gray25")
+        self.search_entry.configure(border_color=border_color)
 
-    def end_search(self, _=None):
-        """Обрабатывает окончание поиска, возвращая стандартный цвет рамки поля ввода."""
-        self.is_searching = False
-        self.update_search_entry_border_color()
+    # --- Tweak toggle methods ---
 
-    def update_search_entry_border_color(self, _=None):
-        """
-        Обновляет цвет рамки поля поиска в зависимости от режима и состояния поиска.
-        Если ведётся поиск, цвет рамки равен акцентному.
-        В противном случае для темной темы используется 'gray70', для светлой – 'gray25'.
-        """
-        mode = ctk.get_appearance_mode()  # Возвращает строку: "Dark" или "Light"
-        if self.is_searching:
-            border = self.accent_color
-        else:
-            border = "gray70" if mode.lower() == "dark" else "gray25"
-        self.search_entry.configure(border_color=border)
-
-    # --- Методы переключения твиков ---
     def toggle_spectre_meltdown(self):
-        self._generic_toggle("spectre_meltdown",
-                             self.system_tweaks.toggle_spectre_meltdown,
-                             self.system_tweaks.toggle_spectre_meltdown)
+        self._generic_toggle("spectre_meltdown", self.system_tweaks.toggle_spectre_meltdown, self.system_tweaks.toggle_spectre_meltdown)
 
     def toggle_nvidia_optimization(self):
-        self._generic_toggle("nvidia_optimization",
-                             self.system_tweaks.toggle_nvidia_optimization,
-                             self.system_tweaks.toggle_nvidia_optimization)
+        self._generic_toggle("nvidia_optimization", self.system_tweaks.toggle_nvidia_optimization, self.system_tweaks.toggle_nvidia_optimization)
 
     def toggle_hdcp(self):
-        self._generic_toggle("hdcp",
-                             self.system_tweaks.toggle_hdcp,
-                             self.system_tweaks.toggle_hdcp)
+        self._generic_toggle("hdcp", self.system_tweaks.toggle_hdcp, self.system_tweaks.toggle_hdcp)
 
     def toggle_power_throttling(self):
-        self._generic_toggle("power_throttling",
-                             self.system_tweaks.toggle_power_throttling,
-                             self.system_tweaks.toggle_power_throttling)
+        self._generic_toggle("power_throttling", self.system_tweaks.toggle_power_throttling, self.system_tweaks.toggle_power_throttling)
 
     def toggle_uwp_background(self):
-        self._generic_toggle("uwp_background",
-                             self.system_tweaks.toggle_uwp_background,
-                             self.system_tweaks.toggle_uwp_background)
-
+        self._generic_toggle("uwp_background", self.system_tweaks.toggle_uwp_background, self.system_tweaks.toggle_uwp_background)
     def toggle_FsoGameBar(self):
-        self._generic_toggle("FsoGameBar",
-                             self.system_tweaks.toggle_FsoGameBar,
-                             self.system_tweaks.toggle_FsoGameBar)
-
+        self._generic_toggle("FsoGameBar", self.system_tweaks.toggle_FsoGameBar, self.system_tweaks.toggle_FsoGameBar)
     def toggle_power_plan(self):
-        self._generic_toggle("power_plan",
-                             self.system_tweaks.toggle_powerplan,
-                             self.system_tweaks.toggle_powerplan)
-
+        self._generic_toggle("power_plan", self.system_tweaks.toggle_powerplan, self.system_tweaks.toggle_powerplan)
     def toggle_fastboot(self):
-        self._generic_toggle("fastboot",
-                             self.system_tweaks.toggle_fastboot,
-                             self.system_tweaks.toggle_fastboot)
+        self._generic_toggle("fastboot", self.system_tweaks.toggle_fastboot, self.system_tweaks.toggle_fastboot)
 
     def toggle_notifications(self):
-        tweak_instance = self.tweaks["notifications"]['instance']
-        if self.tweaks["notifications"]['switch_ref'].get():
-            success = tweak_instance.disable()
-            if not success:
-                self.tweaks["notifications"]['switch_ref'].deselect()
-        else:
-            success = tweak_instance.enable()
-            if not success:
-                self.tweaks["notifications"]['switch_ref'].select()
+        self._generic_toggle("notifications", self.system_tweaks.toggle_notifications, self.system_tweaks.toggle_notifications)
 
     def toggle_cortana(self):
-        tweak_instance = self.tweaks["cortana"]['instance']
-        if self.tweaks["cortana"]['switch_ref'].get():
-            success = tweak_instance.disable()
-            if not success:
-                self.tweaks["cortana"]['switch_ref'].deselect()
-        else:
-            success = tweak_instance.enable()
-            if not success:
-                self.tweaks["cortana"]['switch_ref'].select()
+        self._generic_toggle("notifications", self.system_tweaks.toggle_cortana, self.system_tweaks.toggle_cortana)
+
+    def toggle_hibernation(self):
+        self._generic_toggle("hibernation", self.system_tweaks.toggle_hibernation, self.system_tweaks.toggle_hibernation)
+
+    def toggle_indexing(self):
+        self._generic_toggle("indexing", self.system_tweaks.toggle_indexing, self.system_tweaks.toggle_indexing)
+
+    def toggle_windows_defender(self):
+        self._generic_toggle("windows_defender", self.system_tweaks.toggle_windows_defender, self.system_tweaks.toggle_windows_defender)
+
+    def remove_onedrive(self):
+        self._generic_toggle("onedrive", self.system_tweaks.remove_onedrive, self.system_tweaks.remove_onedrive)
+
+    def toggle_wallpaper_compression(self):
+        self._generic_toggle("wallpaper_compression", self.system_tweaks.toggle_wallpaper_compression, self.system_tweaks.toggle_wallpaper_compression)
+
+    def toggle_sticky_keys(self):
+        self._generic_toggle("sticky_keys", self.system_tweaks.toggle_sticky_keys, self.system_tweaks.toggle_sticky_keys)
+
+    def toggle_mouse_acceleration(self):
+        self._generic_toggle("mouse_acceleration", self.system_tweaks.toggle_mouse_acceleration, self.system_tweaks.toggle_mouse_acceleration)
+
+    def toggle_security_center_notifications(self):
+        self._generic_toggle("security_center_notifications", self.system_tweaks.toggle_security_center_notifications, self.system_tweaks.toggle_security_center_notifications)
+
+    def toggle_app_start_notify(self):
+        self._generic_toggle("app_start_notify", self.system_tweaks.toggle_app_start_notify, self.system_tweaks.toggle_app_start_notify)
+
+    def toggle_prioritize_gaming_tasks(self):
+        self._generic_toggle("prioritize_gaming_tasks", self.system_tweaks.toggle_prioritize_gaming_tasks, self.system_tweaks.toggle_prioritize_gaming_tasks)
+
+    def toggle_uac(self):
+        self._generic_toggle("uac", self.system_tweaks.toggle_uac, self.system_tweaks.toggle_uac)
+
+    def toggle_hw_sch_mode(self):
+        self._generic_toggle("hw_sch_mode", self.system_tweaks.toggle_hw_sch_mode, self.system_tweaks.toggle_hw_sch_mode)
+
+    def uninstall_widgets(self):
+        self._generic_toggle("widgets_uninstall", self.system_tweaks.uninstall_widgets, self.system_tweaks.uninstall_widgets)
+
+    def toggle_clipboard_history(self):
+        self._generic_toggle("clipboard_history", self.system_tweaks.toggle_clipboard_history, self.system_tweaks.toggle_clipboard_history)
+
+    def toggle_core_isolation(self):
+        self._generic_toggle("core_isolation", self.system_tweaks.toggle_core_isolation, self.system_tweaks.toggle_core_isolation)  # security_tweaks
+
+    def toggle_auto_update_maps(self):
+        self._generic_toggle("auto_update_maps", self.system_tweaks.toggle_auto_update_maps, self.system_tweaks.toggle_auto_update_maps)
+
+    def toggle_auto_store_apps(self):
+        self._generic_toggle("auto_store_apps", self.system_tweaks.toggle_auto_store_apps, self.system_tweaks.toggle_auto_store_apps)
+
+    def toggle_background_task_edge_browser(self):
+        self._generic_toggle("background_task_edge_browser", self.system_tweaks.toggle_background_task_edge_browser, self.system_tweaks.toggle_background_task_edge_browser)
+
+    def toggle_win_ad(self):
+        self._generic_toggle("win_ad", self.system_tweaks.toggle_win_ad, self.system_tweaks.toggle_win_ad)  # privacy_tweaks
+
+    def toggle_windows_sync(self):
+        self._generic_toggle("windows_sync", self.system_tweaks.toggle_windows_sync, self.system_tweaks.toggle_windows_sync)  # privacy_tweaks
+
+    def toggle_windows_telemetry(self):
+        self._generic_toggle("windows_telemetry", self.system_tweaks.toggle_windows_telemetry, self.system_tweaks.toggle_windows_telemetry)
+
+    def toggle_nvidia_telemetry(self):
+        self._generic_toggle("nvidia_telemetry", self.system_tweaks.toggle_nvidia_telemetry, self.system_tweaks.toggle_nvidia_telemetry)
+
+    def toggle_installed_app_data(self):
+        self._generic_toggle("installed_app_data", self.system_tweaks.toggle_installed_app_data, self.system_tweaks.toggle_installed_app_data)  # privacy_tweaks
+
+    def toggle_app_usage_stats(self):
+        self._generic_toggle("app_usage_stats", self.system_tweaks.toggle_app_usage_stats, self.system_tweaks.toggle_app_usage_stats)  # privacy_tweaks
+
+    def toggle_handwriting_data(self):
+        self._generic_toggle("handwriting_data", self.system_tweaks.toggle_handwriting_data, self.system_tweaks.toggle_handwriting_data)  # privacy_tweaks
+
+    def modify_hosts_file(self):  # Более описательное название
+        self._generic_toggle("data_domains", self.system_tweaks.modify_hosts_file, self.system_tweaks.modify_hosts_file)  # system_tweaks
+
+    def toggle_user_behavior_logging(self):
+        self._generic_toggle("user_behavior_logging", self.system_tweaks.toggle_user_behavior_logging, self.system_tweaks.toggle_user_behavior_logging)  # privacy_tweaks
+
+    def toggle_location_tracking(self):
+        self._generic_toggle("location_tracking", self.system_tweaks.toggle_location_tracking, self.system_tweaks.toggle_location_tracking)  # privacy_tweaks
+
+    def toggle_feedback_check(self):
+        self._generic_toggle("feedback_check", self.system_tweaks.toggle_feedback_check, self.system_tweaks.toggle_feedback_check)  # privacy_tweaks
+
+    def toggle_background_speech_synthesis(self):
+        self._generic_toggle("background_speech_synthesis", self.system_tweaks.toggle_background_speech_synthesis, self.system_tweaks.toggle_background_speech_synthesis)  # privacy_tweaks
+
+    def toggle_system_monitoring(self):
+        self._generic_toggle("system_monitoring", self.system_tweaks.toggle_system_monitoring, self.system_tweaks.toggle_system_monitoring)
+
+    def toggle_remote_pc_experiments(self):
+        self._generic_toggle("remote_pc_experiments", self.system_tweaks.toggle_remote_pc_experiments, self.system_tweaks.toggle_remote_pc_experiments)  # privacy_tweaks
+
+    def toggle_microsoft_spy_modules(self):
+        self._generic_toggle("microsoft_spy_modules", self.system_tweaks.toggle_microsoft_spy_modules, self.system_tweaks.toggle_microsoft_spy_modules)  # privacy_tweaks
+
+    def toggle_windows_event_logging(self):
+        self._generic_toggle("windows_event_logging", self.system_tweaks.toggle_windows_event_logging, self.system_tweaks.toggle_windows_event_logging)
+
+    def toggle_app_start_tracking(self):
+        self._generic_toggle("app_start_tracking", self.system_tweaks.toggle_app_start_tracking, self.system_tweaks.toggle_app_start_tracking)  # privacy_tweaks
+
+    def toggle_app_settings_sync(self):
+        self._generic_toggle("app_settings_sync", self.system_tweaks.toggle_app_settings_sync, self.system_tweaks.toggle_app_settings_sync)  # privacy_tweaks
+
+    def toggle_explorer_blur(self):
+        self._generic_toggle("explorer_blur", self.system_tweaks.toggle_explorer_blur, self.system_tweaks.toggle_explorer_blur)
+
+    def toggle_show_file_extensions(self):
+        self._generic_toggle("show_file_extensions", self.system_tweaks.toggle_show_file_extensions, self.system_tweaks.toggle_show_file_extensions)
+
+    def toggle_gallery_explorer(self):
+        self._generic_toggle("gallery_explorer", self.system_tweaks.toggle_gallery_explorer, self.system_tweaks.toggle_gallery_explorer)
+
+    def toggle_home_explorer(self):
+        self._generic_toggle("home_explorer", self.system_tweaks.toggle_home_explorer, self.system_tweaks.toggle_home_explorer)
+
+    def toggle_network_explorer(self):
+        self._generic_toggle("network_explorer", self.system_tweaks.toggle_network_explorer, self.system_tweaks.toggle_network_explorer)
+
+    def toggle_taskbar_date(self):
+        self._generic_toggle("taskbar_date", self.system_tweaks.toggle_taskbar_date, self.system_tweaks.toggle_taskbar_date)
+
+    def toggle_icon_arrow_on_shortcut(self):
+        self._generic_toggle("icon_arrow_on_shortcut", self.system_tweaks.toggle_icon_arrow_on_shortcut, self.system_tweaks.toggle_icon_arrow_on_shortcut)
+
+    # Службы
+    def toggle_service_pcasvc(self):
+        self._generic_toggle("service_pcasvc", self.system_tweaks.toggle_service_pcasvc, self.system_tweaks.toggle_service_pcasvc)
+
+    def toggle_service_wecsvc(self):
+        self._generic_toggle("service_wecsvc", self.system_tweaks.toggle_service_wecsvc, self.system_tweaks.toggle_service_wecsvc)
+
+    def toggle_service_wbiosrvc(self):
+        self._generic_toggle("service_wbiosrvc", self.system_tweaks.toggle_service_wbiosrvc, self.system_tweaks.toggle_service_wbiosrvc)
+
+    def toggle_service_stisvc(self):
+        self._generic_toggle("service_stisvc", self.system_tweaks.toggle_service_stisvc, self.system_tweaks.toggle_service_stisvc)
+
+    def toggle_service_wsearch(self):
+        self._generic_toggle("service_wsearch", self.system_tweaks.toggle_service_wsearch, self.system_tweaks.toggle_service_wsearch)
+
+    def toggle_service_mapsbroker(self):
+        self._generic_toggle("service_mapsbroker", self.system_tweaks.toggle_service_mapsbroker, self.system_tweaks.toggle_service_mapsbroker)
+
+    def toggle_service_sensorservice(self):
+        self._generic_toggle("service_sensorservice", self.system_tweaks.toggle_service_sensorservice, self.system_tweaks.toggle_service_sensorservice)
+
+    def toggle_service_hyperv(self):
+        self._generic_toggle("service_hyperv", self.system_tweaks.toggle_service_hyperv, self.system_tweaks.toggle_service_hyperv)
+
+    def toggle_service_xblgamesave(self):
+        self._generic_toggle("service_xblgamesave", self.system_tweaks.toggle_service_xblgamesave, self.system_tweaks.toggle_service_xblgamesave)
+
+    def toggle_services_printer(self):
+        self._generic_toggle("printer_services", self.system_tweaks.toggle_service_printer, self.system_tweaks.toggle_service_printer)
+
+    def toggle_service_sysmain(self):
+        self._generic_toggle("service_sysmain", self.system_tweaks.toggle_service_sysmain, self.system_tweaks.toggle_service_sysmain)
+
+    def toggle_service_wisvc(self):
+        self._generic_toggle("service_wisvc", self.system_tweaks.toggle_service_wisvc, self.system_tweaks.toggle_service_wisvc)
+
+    def toggle_service_diagnostics(self):
+        self._generic_toggle("service_diagnostics", self.system_tweaks.toggle_service_diagnostics, self.system_tweaks.toggle_service_diagnostics)
 
     def _generic_toggle(self, tweak_key, enable_func, disable_func):
-        """
-        Универсальная функция для переключения твика:
-         – обновляет состояние переключателя,
-         – выводит сообщение в статус-бар.
-        """
-        switch_ref = self.tweaks[tweak_key]['switch_ref']
+        """Handles toggling a tweak with separate enable/disable functions."""
+        switch_ref = self.tweaks[tweak_key]["switch_ref"]
         status_bar = self.parent.winfo_toplevel().dynamic_status
+        tweak_instance = self.tweaks[tweak_key].get("instance")
 
-        # Используем русское название, если доступно
-        tweak_instance = self.tweaks[tweak_key].get('instance')
-        tweak_name = getattr(tweak_instance.metadata, 'title', None) or tweak_key
+        # Safely access the title, providing a default if metadata or title is missing
+        tweak_name = tweak_instance.metadata.title if tweak_instance and hasattr(tweak_instance,
+                                                                                 'metadata') and hasattr(
+            tweak_instance.metadata, 'title') else tweak_key
 
-        if switch_ref.get():
-            success = enable_func()
-            if success:
-                status_bar.update_text(f"Твик '{tweak_name}' успешно включен", duration=2000)
-            else:
-                switch_ref.deselect()
-                status_bar.update_text(f"Ошибка при включении твика '{tweak_name}'", duration=3000)
-        else:
+        # Determine the *intended* action based on the switch's *initial* state.
+        initial_state = bool(switch_ref.get())  # True if switch is ON, False if OFF
+
+        # Call the appropriate function (enable or disable) based on the *initial* state.
+        if initial_state:
+            # Switch was initially ON, so the user intends to *disable*.
             success = disable_func()
-            if success:
-                status_bar.update_text(f"Твик '{tweak_name}' успешно выключен", duration=2000)
-            else:
-                switch_ref.select()
-                status_bar.update_text(f"Ошибка при выключении твика '{tweak_name}'", duration=3000)
+            action = "включен"  # User intended to *disable*.
+        else:
+            # Switch was initially OFF, so the user intends to *enable*.
+            success = enable_func()
+            action = "выключен"  # User intended to *enable*.
+
+        if success:
+            status_bar.update_text(f"Твик '{tweak_name}' успешно {action}", duration=3000)
+            self.status_cache.pop(tweak_key, None)  # Invalidate cache
+            self._update_switch_status(tweak_key)  # Update UI from cache
+        else:
+            status_bar.update_text(
+                f"Ошибка при {'включении' if action == 'включен' else 'выключении'} твика '{tweak_name}'",
+                duration=4000)
+            # Correctly revert the switch based on the *initial* state.
+            self.parent.after(0, switch_ref.select if not initial_state else switch_ref.deselect)
 
     def setup_tweaks_page(self, category, search_term=""):
-        """
-        Очищает текущее содержимое и заполняет область новыми твиками,
-        отфильтрованными по категории или поисковому запросу.
-        """
-        for widget in self.scrollable_content.winfo_children():
-            widget.destroy()
-
-        container = ctk.CTkFrame(self.scrollable_content, corner_radius=8, fg_color="transparent")
-        container.pack(fill="both", expand=True, padx=5, pady=5)
+        for card in self.tweak_cards.values():
+            card.pack_forget()  # Hide all cards initially
 
         if search_term:
-            if search_term in self.search_cache:
-                filtered_tweaks = self.search_cache[search_term]
-            else:
-                filtered_tweaks = {}
-                for key, data in self.tweaks.items():
-                    title = data['instance'].metadata.title if data['instance'] else key.replace("_", " ").title()
-                    desc = data['instance'].metadata.description if data['instance'] else "Нет описания."
-                    if search_term.lower() in title.lower() or search_term.lower() in desc.lower():
-                        filtered_tweaks[key] = data
+            if search_term not in self.search_cache:
+                filtered_tweaks = {key: data for key, data in self.tweaks.items()
+                                  if search_term.lower() in (data["instance"].metadata.title.lower() if data["instance"] else key.replace("_", " ").lower())
+                                  or search_term.lower() in (data["instance"].metadata.description.lower() if data["instance"] else "Нет описания.")}
                 self.search_cache[search_term] = filtered_tweaks
+            else:
+                filtered_tweaks = self.search_cache[search_term]
         else:
-            filtered_tweaks = {k: v for k, v in self.tweaks.items() if v['category'] == category}
+            filtered_tweaks = {k: v for k, v in self.tweaks.items() if v["category"] == category}
 
         for tweak_key, tweak_data in filtered_tweaks.items():
-            card = ctk.CTkFrame(
-                container,
-                corner_radius=10,
-                fg_color=("gray90", "gray20"),
-                border_width=1,
-                border_color=("gray80", "gray30")
-            )
-            card.pack(fill="x", expand=True, padx=10, pady=8)
+            if tweak_key not in self.tweak_cards:
+                self.tweak_cards[tweak_key] = self._create_card(tweak_key, tweak_data)
+            self.tweak_cards[tweak_key].pack(fill="x", expand=True, padx=10, pady=8)
+            self._update_card(self.tweak_cards[tweak_key], tweak_key, tweak_data)  # Update card content
+            self._update_switch_status(tweak_key)  # Ensure correct switch status
 
-            text_frame = ctk.CTkFrame(card, fg_color="transparent")
-            text_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-            text_frame.grid_rowconfigure(0, weight=1)
-            text_frame.grid_columnconfigure(0, weight=1)
+    def _create_card(self, tweak_key, tweak_data):
+        card = ctk.CTkFrame(self.scrollable_content, corner_radius=10, fg_color=("gray90", "gray20"),
+                            border_width=1, border_color=("gray80", "gray30"))
+        text_frame = ctk.CTkFrame(card, fg_color="transparent")
+        text_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        text_frame.grid_rowconfigure(0, weight=1)
+        text_frame.grid_columnconfigure(0, weight=1)
 
-            if tweak_data['instance']:
-                title = tweak_data['instance'].metadata.title
-                description = tweak_data['instance'].metadata.description
-            else:
-                title = tweak_key.replace("_", " ").title()
-                description = "Нет описания."
+        title = tweak_data["instance"].metadata.title if tweak_data["instance"] else tweak_key.replace("_", " ").title()
+        description = tweak_data["instance"].metadata.description if tweak_data["instance"] else "Нет описания."
 
-            title_label = ctk.CTkLabel(text_frame, text=title, font=("Roboto", 14, "bold"))
-            title_label.grid(row=0, column=0, sticky="w")
-            desc_label = ctk.CTkLabel(
-                text_frame,
-                text=description,
-                font=("Roboto", 12),
-                justify="left",
-                text_color="#7E7E7E",
-                wraplength=500
-            )
-            desc_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
+        title_label = ctk.CTkLabel(text_frame, text=title, font=("Roboto", 14, "bold"))
+        title_label.grid(row=0, column=0, sticky="w")
+        desc_label = ctk.CTkLabel(text_frame, text=description, font=("Roboto", 12), justify="left",
+                                    text_color="#7E7E7E", wraplength=500)
+        desc_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
-            tweak_switch = ctk.CTkSwitch(
-                card,
-                text="",
-                command=tweak_data['toggle_command'],
-                onvalue=1,
-                offvalue=0,
-                font=("Roboto", 12),
-                # При включении используется акцентный цвет
-                progress_color=self.accent_color,
-                # Опционально: цвет кнопки переключателя (можно оставить по умолчанию)
-                button_color=("white", "white")
-            )
+        tweak_switch = ctk.CTkSwitch(card, text="", command=tweak_data["toggle_command"], onvalue=1, offvalue=0,
+                                    font=("Roboto", 12), progress_color=self.accent_color,
+                                    button_color=("white", "white"))
+        tweak_switch.pack(side="right", padx=10, pady=10)
+        tweak_switch.tweak_key = tweak_key
+        tweak_data["switch_ref"] = tweak_switch
+        return card
 
-            tweak_switch.pack(side="right", padx=10, pady=10)
-            tweak_switch.tweak_key = tweak_key
-            tweak_data['switch_ref'] = tweak_switch
-
-            # Обновление состояния переключателя после фильтрации
-            self._update_switch_status(tweak_key)
-
-        if not self.is_searching:
-            if self._update_id is not None:
-                self.parent.after_cancel(self._update_id)
-            self.update_status()
+    def _update_card(self, card, tweak_key, tweak_data):
+        title = tweak_data["instance"].metadata.title if tweak_data["instance"] else tweak_key.replace("_", " ").title()
+        description = tweak_data["instance"].metadata.description if tweak_data["instance"] else "Нет описания."
+        title_label = card.winfo_children()[0].winfo_children()[0]
+        desc_label = card.winfo_children()[0].winfo_children()[1]
+        title_label.configure(text=title)
+        desc_label.configure(text=description)
+        tweak_switch = card.winfo_children()[1]
+        tweak_switch.tweak_key = tweak_key  # Keep key updated
+        tweak_data["switch_ref"] = tweak_switch
 
     def _update_switch_status(self, tweak_key):
-        """Обновляет состояние переключателя после фильтрации."""
         tweak_data = self.tweaks.get(tweak_key)
-        if tweak_data and tweak_data.get('check_status_func'):
-            is_enabled = tweak_data['check_status_func']()
-            switch = tweak_data['switch_ref']
+        if tweak_data and tweak_data.get("check_status_func"):
+            switch = tweak_data["switch_ref"]
             if switch and switch.winfo_exists():
-                if is_enabled:
-                    switch.select()
-                else:
-                    switch.deselect()
+                try:
+                    is_enabled = self._check_status_cached(tweak_key, tweak_data["check_status_func"])
+                    if is_enabled:
+                        switch.select()
+                    else:
+                        switch.deselect()
+                except Exception as e:
+                    print(f"Error during check_status_func for {tweak_key}: {e}")
+
+    def _check_status_cached(self, tweak_key, check_status_func):
+        now = time.time()
+        if tweak_key in self.status_cache:
+            is_enabled, timestamp = self.status_cache[tweak_key]
+            if now - timestamp < 300:  # 5-minute cache
+                return is_enabled
+        try:
+            is_enabled = check_status_func()
+            self.status_cache[tweak_key] = (is_enabled, now)
+            return is_enabled
+        except Exception as e:
+            print(f"Error checking status for {tweak_key}: {e}")
+            return False
 
     def show_category(self, category):
-        """Запоминает выбранную категорию и отображает соответствующую страницу твиков."""
         self.current_category = category
         self.setup_tweaks_page(category)
 
     def search_tweaks(self, event):
-        """Обрабатывает поиск твиков по введенному тексту асинхронно."""
         search_term = self.search_entry.get()
-        self.update_search_entry_border_color()
+        self.update_search_entry_border_color(searching=bool(search_term))
         if search_term:
             self.is_searching = True
             asyncio.run_coroutine_threadsafe(self.setup_tweaks_page_async(search_term=search_term), loop)
         else:
             self.is_searching = False
-            if self.current_category:
-                self.setup_tweaks_page(self.current_category)
-            else:
-                self.setup_tweaks_page("Оптимизация и настройки")
+            self.show_category(self.current_category or "Оптимизация и настройки")
 
     async def setup_tweaks_page_async(self, search_term=""):
-        """Асинхронно обновляет страницу твиков."""
-        await asyncio.sleep(0.1)  # Имитация асинхронной задержки
+        await asyncio.sleep(0.01)  # Small delay
         self.parent.after(0, self.setup_tweaks_page, None, search_term)
 
     def update_status_manual(self):
-        """Обновляет статусы твиков вручную (например, по нажатию кнопки)."""
         self.update_status(manual=True)
 
     def update_status(self, manual=False):
-        """
-        Проверяет и обновляет состояние всех твиков в отдельном потоке.
-        Используется блокировка для предотвращения одновременных обновлений.
-        """
-        if self._update_id:
-            self.parent.after_cancel(self._update_id)
-            self._update_id = None
-
         if not self.update_lock.acquire(blocking=False):
             if not manual:
-                self._update_id = self.parent.after(100, self.update_status)
+                self.parent.after(100, self.update_status)
             return
 
-        try:
-            def update_in_thread():
-                try:
-                    for tweak_key, tweak_data in self.tweaks.items():
-                        switch = tweak_data.get('switch_ref')
-                        check_status_func = tweak_data.get('check_status_func')
-                        if switch is not None and check_status_func and switch.winfo_exists():
-                            try:
-                                is_enabled = check_status_func()
-                                self.parent.after(0, self._update_switch, switch, is_enabled)
-                            except Exception as e:
-                                print(f"Error updating status for {tweak_key}: {e}")
-                finally:
-                    if not self.is_searching:
-                        self.parent.after(5000, self.update_status)
-                    self.update_lock.release()
-
+        def update_in_thread():
+            try:
+                for tweak_key, tweak_data in self.tweaks.items():
+                    if tweak_data.get("check_status_func"):
+                        try:
+                            self._check_status_cached(tweak_key, tweak_data["check_status_func"])  # Update cache
+                        except Exception:
+                            print(f"Error updating cache for {tweak_key}")
+            finally:
+                self.update_lock.release()
                 if manual:
-                    print("Statuses updated manually by 'R' button.")
+                    print("Statuses updated manually.")
 
-            threading.Thread(target=update_in_thread, daemon=True).start()
+        threading.Thread(target=update_in_thread, daemon=True).start()
 
-        except Exception as e:
-            print(f"An unexpected error occurred during the update: {e}")
-            self.update_lock.release()
+    def on_visibility_change(self, event):
+        if event.widget == self.parent:
+            if event.state == 0:
+                self.visible = False
+            elif not self.visible:
+                self.visible = True
+                self._schedule_ui_update()  # Restart UI updates
+                self.update_status_manual()
 
-    def _update_switch(self, switch, is_enabled):
-        """Обновляет состояние переключателя на главном потоке."""
-        try:
-            if switch.winfo_exists():
-                if is_enabled:
-                    switch.select()
-                else:
-                    switch.deselect()
-        except tk.TclError as e:
-            print(f"TclError updating switch: {e}")
+    def _schedule_ui_update(self):
+        if self.visible:
+            self.parent.after(self.ui_update_interval, self._update_ui_from_cache)
+
+    def _update_ui_from_cache(self):
+        if not self.visible:
+            return
+
+        for tweak_key in self.tweaks:
+            self._update_switch_status(tweak_key)  # Simplified update
+        self._schedule_ui_update()
 
 if __name__ == "__main__":
     app = ctk.CTk()
     app.title("ASX Hub Tweaks")
     app.geometry("1050x800")
-    # Для корректной работы status_bar предполагается, что основной класс приложения создаёт динамический статус-бар.
-    # Если его нет, можно создать его здесь для теста:
-    # app.dynamic_status = DynamicStatusBar(app, default_text="Статус приложения", height=25)
     tweaks_tab = TweaksTab(app)
     app.mainloop()
