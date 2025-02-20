@@ -7,6 +7,7 @@ import asyncio
 import subprocess
 import re
 from collections import defaultdict
+from gui.utils import resource_path
 from tkinter import ttk  # Import ttk for themed widgets
 
 try:
@@ -15,13 +16,13 @@ except ImportError:
     print("Error: CustomTkinter not found. Please install it using: pip install customtkinter")
     sys.exit(1)
 
-from config import TWEAK_CATEGORIES, TWEAKS  # Keep for future use
+from config import TWEAK_CATEGORIES, TWEAKS, DRIVER_DESCRIPTIONS  # Import DRIVER_DESCRIPTIONS from config
 from utils.system_tweaks import SystemTweaks  # Keep for future use
 
 def load_settings(settings_file="settings.json"):
     """Loads settings from a JSON file."""
     try:
-        with open(settings_file, "r") as f:
+        with open(resource_path(settings_file), "r") as f: # Use resource_path for settings.json as well, for consistency
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"Error loading settings: {e}. Using default settings.")
@@ -73,7 +74,7 @@ class DriverTab:
         self.drivers = []
         self.outdated_drivers = []
         self.accent_color = settings.get("accent_color", "#1f6aa5")
-        self.driver_descriptions = self.load_driver_descriptions()  # Load descriptions
+        self.driver_descriptions = DRIVER_DESCRIPTIONS  # Load descriptions from config.py
         self._setup_ui()
         self.load_drivers()  # Load drivers on initialization
 
@@ -92,7 +93,6 @@ class DriverTab:
         self.content_frame.grid(row=0, column=0, sticky="nsew")
         self.content_frame.grid_rowconfigure(0, weight=1)
         self.content_frame.grid_columnconfigure(0, weight=1)
-
 
         self._create_content_area()
 
@@ -114,15 +114,6 @@ class DriverTab:
         # Search bar will be created conditionally
         self.search_var = None
         self.search_entry = None
-
-    def load_driver_descriptions(self, filename="driver_descriptions.json"):
-        """Loads driver descriptions from a JSON file."""
-        try:
-            with open(filename, "r", encoding="utf-8") as f:  # Ensure UTF-8 encoding
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Error loading driver descriptions: {e}")
-            return {}  # Return an empty dict if the file is missing or invalid
 
     def get_driver_description(self, original_name):
         """Retrieves the description for a driver based on its original name."""
@@ -158,6 +149,8 @@ class DriverTab:
                 if len(parts) == 2:
                     current_driver["Driver Date"] = parts[0].strip()
                     current_driver["Driver Version"] = parts[1].strip()
+            elif line.startswith("Путь к файлу драйвера:"):
+                current_driver["Driver Path"] = line.split(":", 1)[1].strip()
         if current_driver:
             drivers.append(current_driver)
         return drivers
@@ -213,17 +206,31 @@ class DriverTab:
             return False
 
     def confirm_and_delete(self, driver):
-        """Opens a confirmation dialog before deleting a driver."""
-        # Use CTkDialog for better styling consistency
-        dialog = ctk.CTkInputDialog(
-            text=f"Вы уверены, что хотите удалить драйвер {driver['Published Name']}?\nВведите 'yes' для подтверждения.",
-            title="Подтверждение удаления"
-        )
-        confirmation = dialog.get_input()
+        """Opens a confirmation dialog with "Подтвердить" button before deleting a driver."""
+        dialog = ctk.CTkToplevel(self.parent)
+        dialog.title("Подтверждение удаления")
+        dialog.geometry("400x200")
+        dialog.grab_set() # Make dialog modal
 
-        if confirmation and confirmation.lower() == 'yes':
+        label = ctk.CTkLabel(dialog, text=f"Вы уверены, что хотите удалить драйвер {driver['Original Name']}?", wraplength=350) # Использовать Original Name
+        label.pack(padx=20, pady=20)
+
+        def confirm_deletion():
             if self.delete_driver(driver):
                 self.load_drivers()
+            dialog.destroy()
+
+        def cancel_deletion():
+            dialog.destroy()
+
+        confirm_button = ctk.CTkButton(dialog, text="Подтвердить", command=confirm_deletion)
+        confirm_button.pack(side="left", padx=20, pady=(0, 20))
+
+        cancel_button = ctk.CTkButton(dialog, text="Отмена", command=cancel_deletion)
+        cancel_button.pack(side="right", padx=20, pady=(0, 20))
+
+        dialog.transient(self.parent) # Set dialog to be on top of the main window
+        dialog.wait_window(dialog) # Wait for dialog to close
 
     def display_drivers(self):
         """Displays driver information in the UI, with descriptions below each driver."""
@@ -247,8 +254,7 @@ class DriverTab:
         elif self.search_entry:
             self.search_entry.grid_forget()
 
-
-        label = ctk.CTkLabel(self.scrollable_content, text="Здесь перечислены драйверы, которые ASX Hub считает устаревшими. Их можно удалить, но не факт что это безопасно.", font=("Segoe UI Semilight Italic", 15), wraplength=850, justify="center")
+        label = ctk.CTkLabel(self.scrollable_content, text="Здесь перечислены драйверы, которые ASX Hub считает устаревшими. Их можно удалить, но не факт, что это безопасно.", font=("Segoe UI Semilight Italic", 15), wraplength=850, justify="center")
         label.pack(pady=(5,5))
 
         # --- Driver Entries ---
@@ -273,12 +279,10 @@ class DriverTab:
             ctk.CTkLabel(version_date_frame, text=f"Версия: {drv.get('Driver Version', 'N/A')}", font=("Consolas", 13), anchor="w").grid(row=0, column=0, sticky="ew", padx=0, pady=0)  # Increased padx, pady
             ctk.CTkLabel(version_date_frame, text=f"Дата: {drv.get('Driver Date', 'N/A')}", font=("Consolas", 13), anchor="w").grid(row=1, column=0, sticky="ew", padx=0, pady=0)  # Increased padx, pady
 
-
             # --- Row 3: Description ---
             description = self.get_driver_description(drv.get('Original Name', ''))
             description_label = ctk.CTkLabel(driver_frame, text=description, font=("Roboto", 12), wraplength=700, justify="left", anchor="w", fg_color=("gray94", "gray25"), corner_radius=6)  # Slightly lighter background for description, increased corner_radius
             description_label.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(8, 10))  # Increased padx, pady
-
 
     def filter_drivers(self, *args):
         """Filters the displayed drivers based on the search query."""
@@ -295,8 +299,6 @@ class DriverTab:
             label = ctk.CTkLabel(self.scrollable_content, text="Нет совпадений.", font=("Roboto", 16, "bold"))
             label.pack(pady=20)
             return
-
-        # --- Header Removed ---
 
         # --- Driver Entries ---
         for drv in drivers:
@@ -320,23 +322,32 @@ class DriverTab:
             ctk.CTkLabel(version_date_frame, text=f"Версия: {drv.get('Driver Version', 'N/A')}", font=("Roboto", 12), anchor="w").grid(row=0, column=0, sticky="ew", padx=0, pady=0)  # Increased padx, pady
             ctk.CTkLabel(version_date_frame, text=f"Дата: {drv.get('Driver Date', 'N/A')}", font=("Roboto", 12), anchor="w").grid(row=1, column=0, sticky="ew", padx=0, pady=0)  # Increased padx, pady
 
-
             # --- Row 3: Description ---
             description = self.get_driver_description(drv.get('Original Name', ''))
             description_label = ctk.CTkLabel(driver_frame, text=description, font=("Roboto", 12), wraplength=700, justify="left", anchor="w", fg_color=("gray94", "gray25"), corner_radius=6)  # Slightly lighter background for description, increased corner_radius
             description_label.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(8, 10))  # Increased padx, pady
 
+    def save_outdated_drivers_data(self, count, drivers, filename="outdated_drivers_data.json"):
+        """Saves outdated drivers count and (optionally) drivers to JSON file."""
+        data = {"count": count, "drivers": drivers} # Optionally save drivers list if needed in home tab
+        try:
+            with open(resource_path(filename), "w") as f: # Use resource_path for saving as well, for consistency
+                json.dump(data, f)
+        except Exception as e:
+            print(f"Error saving outdated drivers data: {e}")
 
     def load_drivers(self):
         """Loads and displays driver information."""
-        self.status_bar.update_text("Загрузка драйверов...")  # Immediate feedback
+        self.status_bar.update_text("Получение списка драйверов...", duration=2000)  # Immediate feedback
         output = self.run_pnputil()
         if output:
             self.drivers = self.parse_pnputil_output(output)
             self.outdated_drivers = self.find_outdated_drivers(self.drivers)
-            self.status_bar.update_text("Драйверы загружены.", duration=3000)  # Completion message
+            self.save_outdated_drivers_data(len(self.outdated_drivers), []) # Save count to json, not saving drivers for now
+            self.status_bar.update_text("Список драйверов получен.", duration=2000)  # Completion message
         else:
-            self.status_bar.update_text("Не удалось загрузить драйверы.", duration=5000)  # Error message
+            self.save_outdated_drivers_data(0, []) # Save 0 if loading fails
+            self.status_bar.update_text("Не удалось получить список драйверов.", duration=5000)  # Error message
         self.display_drivers()
 
 class App(ctk.CTk):

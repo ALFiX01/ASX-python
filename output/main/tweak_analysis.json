@@ -1,0 +1,401 @@
+{
+    "timestamp": "2025-02-17T18:42:44.542099",
+    "tweaks": {
+        "power_plan": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "План электропитания ASX Hub"
+        },
+        "FsoGameBar": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "FSO и GameBar"
+        },
+        "spectre_meltdown": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Spectre, Meldown, DownFall"
+        },
+        "nvidia_optimization": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Оптимизация настроек Nvidia"
+        },
+        "hdcp": {
+            "enabled": true,
+            "optimized": false,
+            "category": "Оптимизация и настройки",
+            "title": "HDCP"
+        },
+        "power_throttling": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Power Throttling"
+        },
+        "uwp_background": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Работа UWP программ в фоне"
+        },
+        "notifications": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Уведомления"
+        },
+        "cortana": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Cortana"
+        },
+        "fastboot": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Быстрый запуск (Hiberboot)"
+        },
+        "hibernation": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Гибернация"
+        },
+        "indexing": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Индексирование"
+        },
+        "windows_defender": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Защитник Windows (Windows Defender)"
+        },
+        "onedrive": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Удаление OneDrive"
+        },
+        "wallpaper_compression": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Кастомизация",
+            "title": "Сжатие обоев"
+        },
+        "sticky_keys": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Залипание клавиш"
+        },
+        "mouse_acceleration": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Ускорение мыши"
+        },
+        "security_center_notifications": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Уведомления Центра безопасности"
+        },
+        "app_start_notify": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Предупреждения при запуске приложений"
+        },
+        "prioritize_gaming_tasks": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Оптимизация и настройки",
+            "title": "Приоритизация игровых задач"
+        },
+        "uac": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Контроль учетных записей (UAC)"
+        },
+        "hw_sch_mode": {
+            "enabled": true,
+            "optimized": false,
+            "category": "Оптимизация и настройки",
+            "title": "Аппаратное ускорение GPU"
+        },
+        "widgets_uninstall": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Удаление виджетов Windows"
+        },
+        "clipboard_history": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Журнал буфера обмена"
+        },
+        "core_isolation": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Оптимизация и настройки",
+            "title": "Изоляция ядра"
+        },
+        "auto_update_maps": {
+            "enabled": true,
+            "optimized": false,
+            "category": "Оптимизация и настройки",
+            "title": "Автообновление карт"
+        },
+        "auto_store_apps": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Автообновление приложений Магазина"
+        },
+        "background_task_edge_browser": {
+            "enabled": false,
+            "optimized": true,
+            "category": "Оптимизация и настройки",
+            "title": "Фоновая работа Microsoft Edge"
+        },
+        "win_ad": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Рекламный идентификатор Windows"
+        },
+        "windows_sync": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Синхронизация Windows"
+        },
+        "windows_telemetry": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Телеметрия Windows"
+        },
+        "nvidia_telemetry": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Телеметрия NVIDIA"
+        },
+        "installed_app_data": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Сбор данных об установленных приложениях"
+        },
+        "app_usage_stats": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Статистика использования приложений"
+        },
+        "handwriting_data": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Данные рукописного ввода"
+        },
+        "data_domains": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Блокировка доменов (hosts)"
+        },
+        "user_behavior_logging": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Ведение журнала поведения пользователя"
+        },
+        "location_tracking": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Отслеживание местоположения"
+        },
+        "feedback_check": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Проверка обратной связи"
+        },
+        "background_speech_synthesis": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Фоновое обновление синтеза речи"
+        },
+        "system_monitoring": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Мониторинг системы"
+        },
+        "remote_pc_experiments": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Удаленные эксперименты над ПК"
+        },
+        "microsoft_spy_modules": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Шпионские модули Microsoft"
+        },
+        "windows_event_logging": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Оптимизация и настройки",
+            "title": "Журналирование событий Windows"
+        },
+        "app_start_tracking": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Отслеживание запуска приложений"
+        },
+        "app_settings_sync": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Конфиденциальность",
+            "title": "Синхронизация настроек приложений"
+        },
+        "explorer_blur": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Кастомизация",
+            "title": "Размытие фона проводника"
+        },
+        "show_file_extensions": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Кастомизация",
+            "title": "Показывать расширения файлов"
+        },
+        "gallery_explorer": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Кастомизация",
+            "title": "Галерея в проводнике"
+        },
+        "home_explorer": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Кастомизация",
+            "title": "Главная в проводнике"
+        },
+        "network_explorer": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Кастомизация",
+            "title": "Сеть в проводнике"
+        },
+        "taskbar_date": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Кастомизация",
+            "title": "Дата на панели задач"
+        },
+        "icon_arrow_on_shortcut": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Кастомизация",
+            "title": "Стрелки на ярлыках"
+        },
+        "service_pcasvc": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Службы",
+            "title": "Служба PcaSvc"
+        },
+        "service_wecsvc": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Службы",
+            "title": "Служба Wecsvc"
+        },
+        "service_wbiosrvc": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Службы",
+            "title": "Служба WbioSrvc"
+        },
+        "service_stisvc": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Службы",
+            "title": "Служба stisvc"
+        },
+        "service_wsearch": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Службы",
+            "title": "Служба WSearch"
+        },
+        "service_mapsbroker": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Службы",
+            "title": "Служба MapsBroker"
+        },
+        "service_sensorservice": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Службы",
+            "title": "Службы сенсоров"
+        },
+        "service_hyperv": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Службы",
+            "title": "Службы Hyper-V"
+        },
+        "service_xblgamesave": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Службы",
+            "title": "Службы Xbox"
+        },
+        "services_printer": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Службы",
+            "title": "Службы печати (Spooler, PrintNotify)"
+        },
+        "service_sysmain": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Службы",
+            "title": "Служба SysMain"
+        },
+        "service_wisvc": {
+            "enabled": true,
+            "optimized": true,
+            "category": "Службы",
+            "title": "Служба wisvc"
+        },
+        "service_diagnostics": {
+            "enabled": false,
+            "optimized": false,
+            "category": "Службы",
+            "title": "Службы диагностики"
+        }
+    }
+}

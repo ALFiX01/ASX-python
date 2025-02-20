@@ -15,6 +15,7 @@ except ImportError:
 from config import TWEAK_CATEGORIES, TWEAKS
 from utils.system_tweaks import SystemTweaks
 
+
 def load_settings(settings_file="settings.json"):
     """Loads settings from a JSON file or returns default settings."""
     try:
@@ -29,17 +30,21 @@ def load_settings(settings_file="settings.json"):
             "accent_color": "#1f6aa5"
         }
 
+
 settings = load_settings()
 ctk.set_appearance_mode(settings.get("appearance_mode", "System"))
 ctk.set_default_color_theme(settings.get("theme", "blue"))
+
 
 def start_asyncio_loop(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
 
+
 # Asyncio loop in a separate thread
 loop = asyncio.new_event_loop()
 threading.Thread(target=start_asyncio_loop, args=(loop,), daemon=True).start()
+
 
 class TweaksTab:
     def __init__(self, parent):
@@ -48,6 +53,8 @@ class TweaksTab:
         self.current_category = None
         self.search_cache = {}
         self.is_searching = False
+        from utils.tweak_analyzer import TweakAnalyzer
+        self.analyzer = TweakAnalyzer()
         self.selected_category = None
         self.category_buttons = {}
         self.update_lock = threading.Lock()
@@ -121,8 +128,8 @@ class TweaksTab:
         self.search_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=(6, 7))
         self.search_frame.grid_columnconfigure(0, weight=1)
         self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Поиск твиков...", height=38,
-                                        corner_radius=8, border_width=2, border_color="gray25",
-                                        fg_color=("gray85", "gray17"), font=("Roboto", 14))
+                                         corner_radius=8, border_width=2, border_color="gray25",
+                                         fg_color=("gray85", "gray17"), font=("Roboto", 14))
         self.search_entry.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         self.search_entry.bind("<KeyRelease>", self.search_tweaks)
         self.search_entry.bind("<FocusIn>", lambda e: self.update_search_entry_border_color(searching=True))
@@ -136,14 +143,21 @@ class TweaksTab:
                                             text_color=self.accent_color)
         self.refresh_button.grid(row=0, column=1, padx=(0, 5))
         clear_btn = ctk.CTkButton(self.search_frame, text="✕", width=button_width, height=38, corner_radius=8,
-                                    fg_color=("gray85", "gray17"), hover_color=("gray70", "gray30"), border_width=2,
-                                    border_color="gray25", command=self.clear_search, font=("Open Sans", 25),
-                                    text_color=self.accent_color)
+                                  fg_color=("gray85", "gray17"), hover_color=("gray70", "gray30"), border_width=2,
+                                  border_color="gray25", command=self.clear_search, font=("Open Sans", 25),
+                                  text_color=self.accent_color)
         clear_btn.grid(row=0, column=2)
+
+        analyze_btn = ctk.CTkButton(self.search_frame, text="📊", width=button_width, height=38,
+                                    corner_radius=8, fg_color=("gray85", "gray17"),
+                                    hover_color=("gray70", "gray30"), border_width=2,
+                                    border_color="gray25", command=self.analyze_tweaks,
+                                    font=("Segoe UI Emoji", 16), text_color=self.accent_color)
+        analyze_btn.grid(row=0, column=3, padx=(5, 0))
 
     def _create_content_area(self):
         self.scrollable_content = ctk.CTkScrollableFrame(self.content_frame, corner_radius=10,
-                                                        fg_color=("gray85", "gray17"))
+                                                         fg_color=("gray85", "gray17"))
         self.scrollable_content.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
         self.content_frame.grid_columnconfigure(0, weight=1)
         self.content_frame.grid_rowconfigure(1, weight=1)
@@ -176,200 +190,261 @@ class TweaksTab:
     # --- Tweak toggle methods ---
 
     def toggle_spectre_meltdown(self):
-        self._generic_toggle("spectre_meltdown", self.system_tweaks.toggle_spectre_meltdown, self.system_tweaks.toggle_spectre_meltdown)
+        self._generic_toggle("spectre_meltdown", self.system_tweaks.toggle_spectre_meltdown,
+                             self.system_tweaks.toggle_spectre_meltdown)
 
     def toggle_nvidia_optimization(self):
-        self._generic_toggle("nvidia_optimization", self.system_tweaks.toggle_nvidia_optimization, self.system_tweaks.toggle_nvidia_optimization)
+        self._generic_toggle("nvidia_optimization", self.system_tweaks.toggle_nvidia_optimization,
+                             self.system_tweaks.toggle_nvidia_optimization)
 
     def toggle_hdcp(self):
         self._generic_toggle("hdcp", self.system_tweaks.toggle_hdcp, self.system_tweaks.toggle_hdcp)
 
     def toggle_power_throttling(self):
-        self._generic_toggle("power_throttling", self.system_tweaks.toggle_power_throttling, self.system_tweaks.toggle_power_throttling)
+        self._generic_toggle("power_throttling", self.system_tweaks.toggle_power_throttling,
+                             self.system_tweaks.toggle_power_throttling)
 
     def toggle_uwp_background(self):
-        self._generic_toggle("uwp_background", self.system_tweaks.toggle_uwp_background, self.system_tweaks.toggle_uwp_background)
+        self._generic_toggle("uwp_background", self.system_tweaks.toggle_uwp_background,
+                             self.system_tweaks.toggle_uwp_background)
+
     def toggle_FsoGameBar(self):
         self._generic_toggle("FsoGameBar", self.system_tweaks.toggle_FsoGameBar, self.system_tweaks.toggle_FsoGameBar)
+
     def toggle_power_plan(self):
         self._generic_toggle("power_plan", self.system_tweaks.toggle_powerplan, self.system_tweaks.toggle_powerplan)
+
     def toggle_fastboot(self):
         self._generic_toggle("fastboot", self.system_tweaks.toggle_fastboot, self.system_tweaks.toggle_fastboot)
 
     def toggle_notifications(self):
-        self._generic_toggle("notifications", self.system_tweaks.toggle_notifications, self.system_tweaks.toggle_notifications)
+        self._generic_toggle("notifications", self.system_tweaks.toggle_notifications,
+                             self.system_tweaks.toggle_notifications)
 
     def toggle_cortana(self):
         self._generic_toggle("notifications", self.system_tweaks.toggle_cortana, self.system_tweaks.toggle_cortana)
 
     def toggle_hibernation(self):
-        self._generic_toggle("hibernation", self.system_tweaks.toggle_hibernation, self.system_tweaks.toggle_hibernation)
+        self._generic_toggle("hibernation", self.system_tweaks.toggle_hibernation,
+                             self.system_tweaks.toggle_hibernation)
 
     def toggle_indexing(self):
         self._generic_toggle("indexing", self.system_tweaks.toggle_indexing, self.system_tweaks.toggle_indexing)
 
     def toggle_windows_defender(self):
-        self._generic_toggle("windows_defender", self.system_tweaks.toggle_windows_defender, self.system_tweaks.toggle_windows_defender)
+        self._generic_toggle("windows_defender", self.system_tweaks.toggle_windows_defender,
+                             self.system_tweaks.toggle_windows_defender)
 
     def remove_onedrive(self):
         self._generic_toggle("onedrive", self.system_tweaks.remove_onedrive, self.system_tweaks.remove_onedrive)
 
     def toggle_wallpaper_compression(self):
-        self._generic_toggle("wallpaper_compression", self.system_tweaks.toggle_wallpaper_compression, self.system_tweaks.toggle_wallpaper_compression)
+        self._generic_toggle("wallpaper_compression", self.system_tweaks.toggle_wallpaper_compression,
+                             self.system_tweaks.toggle_wallpaper_compression)
 
     def toggle_sticky_keys(self):
-        self._generic_toggle("sticky_keys", self.system_tweaks.toggle_sticky_keys, self.system_tweaks.toggle_sticky_keys)
+        self._generic_toggle("sticky_keys", self.system_tweaks.toggle_sticky_keys,
+                             self.system_tweaks.toggle_sticky_keys)
 
     def toggle_mouse_acceleration(self):
-        self._generic_toggle("mouse_acceleration", self.system_tweaks.toggle_mouse_acceleration, self.system_tweaks.toggle_mouse_acceleration)
+        self._generic_toggle("mouse_acceleration", self.system_tweaks.toggle_mouse_acceleration,
+                             self.system_tweaks.toggle_mouse_acceleration)
 
     def toggle_security_center_notifications(self):
-        self._generic_toggle("security_center_notifications", self.system_tweaks.toggle_security_center_notifications, self.system_tweaks.toggle_security_center_notifications)
+        self._generic_toggle("security_center_notifications", self.system_tweaks.toggle_security_center_notifications,
+                             self.system_tweaks.toggle_security_center_notifications)
 
     def toggle_app_start_notify(self):
-        self._generic_toggle("app_start_notify", self.system_tweaks.toggle_app_start_notify, self.system_tweaks.toggle_app_start_notify)
+        self._generic_toggle("app_start_notify", self.system_tweaks.toggle_app_start_notify,
+                             self.system_tweaks.toggle_app_start_notify)
 
     def toggle_prioritize_gaming_tasks(self):
-        self._generic_toggle("prioritize_gaming_tasks", self.system_tweaks.toggle_prioritize_gaming_tasks, self.system_tweaks.toggle_prioritize_gaming_tasks)
+        self._generic_toggle("prioritize_gaming_tasks", self.system_tweaks.toggle_prioritize_gaming_tasks,
+                             self.system_tweaks.toggle_prioritize_gaming_tasks)
 
     def toggle_uac(self):
         self._generic_toggle("uac", self.system_tweaks.toggle_uac, self.system_tweaks.toggle_uac)
 
     def toggle_hw_sch_mode(self):
-        self._generic_toggle("hw_sch_mode", self.system_tweaks.toggle_hw_sch_mode, self.system_tweaks.toggle_hw_sch_mode)
+        self._generic_toggle("hw_sch_mode", self.system_tweaks.toggle_hw_sch_mode,
+                             self.system_tweaks.toggle_hw_sch_mode)
 
     def uninstall_widgets(self):
-        self._generic_toggle("widgets_uninstall", self.system_tweaks.uninstall_widgets, self.system_tweaks.uninstall_widgets)
+        self._generic_toggle("widgets_uninstall", self.system_tweaks.uninstall_widgets,
+                             self.system_tweaks.uninstall_widgets)
 
     def toggle_clipboard_history(self):
-        self._generic_toggle("clipboard_history", self.system_tweaks.toggle_clipboard_history, self.system_tweaks.toggle_clipboard_history)
+        self._generic_toggle("clipboard_history", self.system_tweaks.toggle_clipboard_history,
+                             self.system_tweaks.toggle_clipboard_history)
 
     def toggle_core_isolation(self):
-        self._generic_toggle("core_isolation", self.system_tweaks.toggle_core_isolation, self.system_tweaks.toggle_core_isolation)  # security_tweaks
+        self._generic_toggle("core_isolation", self.system_tweaks.toggle_core_isolation,
+                             self.system_tweaks.toggle_core_isolation)  # security_tweaks
 
     def toggle_auto_update_maps(self):
-        self._generic_toggle("auto_update_maps", self.system_tweaks.toggle_auto_update_maps, self.system_tweaks.toggle_auto_update_maps)
+        self._generic_toggle("auto_update_maps", self.system_tweaks.toggle_auto_update_maps,
+                             self.system_tweaks.toggle_auto_update_maps)
 
     def toggle_auto_store_apps(self):
-        self._generic_toggle("auto_store_apps", self.system_tweaks.toggle_auto_store_apps, self.system_tweaks.toggle_auto_store_apps)
+        self._generic_toggle("auto_store_apps", self.system_tweaks.toggle_auto_store_apps,
+                             self.system_tweaks.toggle_auto_store_apps)
 
     def toggle_background_task_edge_browser(self):
-        self._generic_toggle("background_task_edge_browser", self.system_tweaks.toggle_background_task_edge_browser, self.system_tweaks.toggle_background_task_edge_browser)
+        self._generic_toggle("background_task_edge_browser", self.system_tweaks.toggle_background_task_edge_browser,
+                             self.system_tweaks.toggle_background_task_edge_browser)
 
     def toggle_win_ad(self):
-        self._generic_toggle("win_ad", self.system_tweaks.toggle_win_ad, self.system_tweaks.toggle_win_ad)  # privacy_tweaks
+        self._generic_toggle("win_ad", self.system_tweaks.toggle_win_ad,
+                             self.system_tweaks.toggle_win_ad)  # privacy_tweaks
 
     def toggle_windows_sync(self):
-        self._generic_toggle("windows_sync", self.system_tweaks.toggle_windows_sync, self.system_tweaks.toggle_windows_sync)  # privacy_tweaks
+        self._generic_toggle("windows_sync", self.system_tweaks.toggle_windows_sync,
+                             self.system_tweaks.toggle_windows_sync)  # privacy_tweaks
 
     def toggle_windows_telemetry(self):
-        self._generic_toggle("windows_telemetry", self.system_tweaks.toggle_windows_telemetry, self.system_tweaks.toggle_windows_telemetry)
+        self._generic_toggle("windows_telemetry", self.system_tweaks.toggle_windows_telemetry,
+                             self.system_tweaks.toggle_windows_telemetry)
 
     def toggle_nvidia_telemetry(self):
-        self._generic_toggle("nvidia_telemetry", self.system_tweaks.toggle_nvidia_telemetry, self.system_tweaks.toggle_nvidia_telemetry)
+        self._generic_toggle("nvidia_telemetry", self.system_tweaks.toggle_nvidia_telemetry,
+                             self.system_tweaks.toggle_nvidia_telemetry)
 
     def toggle_installed_app_data(self):
-        self._generic_toggle("installed_app_data", self.system_tweaks.toggle_installed_app_data, self.system_tweaks.toggle_installed_app_data)  # privacy_tweaks
+        self._generic_toggle("installed_app_data", self.system_tweaks.toggle_installed_app_data,
+                             self.system_tweaks.toggle_installed_app_data)  # privacy_tweaks
 
     def toggle_app_usage_stats(self):
-        self._generic_toggle("app_usage_stats", self.system_tweaks.toggle_app_usage_stats, self.system_tweaks.toggle_app_usage_stats)  # privacy_tweaks
+        self._generic_toggle("app_usage_stats", self.system_tweaks.toggle_app_usage_stats,
+                             self.system_tweaks.toggle_app_usage_stats)  # privacy_tweaks
 
     def toggle_handwriting_data(self):
-        self._generic_toggle("handwriting_data", self.system_tweaks.toggle_handwriting_data, self.system_tweaks.toggle_handwriting_data)  # privacy_tweaks
+        self._generic_toggle("handwriting_data", self.system_tweaks.toggle_handwriting_data,
+                             self.system_tweaks.toggle_handwriting_data)  # privacy_tweaks
 
     def modify_hosts_file(self):  # Более описательное название
-        self._generic_toggle("data_domains", self.system_tweaks.modify_hosts_file, self.system_tweaks.modify_hosts_file)  # system_tweaks
+        self._generic_toggle("data_domains", self.system_tweaks.modify_hosts_file,
+                             self.system_tweaks.modify_hosts_file)  # system_tweaks
 
     def toggle_user_behavior_logging(self):
-        self._generic_toggle("user_behavior_logging", self.system_tweaks.toggle_user_behavior_logging, self.system_tweaks.toggle_user_behavior_logging)  # privacy_tweaks
+        self._generic_toggle("user_behavior_logging", self.system_tweaks.toggle_user_behavior_logging,
+                             self.system_tweaks.toggle_user_behavior_logging)  # privacy_tweaks
 
     def toggle_location_tracking(self):
-        self._generic_toggle("location_tracking", self.system_tweaks.toggle_location_tracking, self.system_tweaks.toggle_location_tracking)  # privacy_tweaks
+        self._generic_toggle("location_tracking", self.system_tweaks.toggle_location_tracking,
+                             self.system_tweaks.toggle_location_tracking)  # privacy_tweaks
 
     def toggle_feedback_check(self):
-        self._generic_toggle("feedback_check", self.system_tweaks.toggle_feedback_check, self.system_tweaks.toggle_feedback_check)  # privacy_tweaks
+        self._generic_toggle("feedback_check", self.system_tweaks.toggle_feedback_check,
+                             self.system_tweaks.toggle_feedback_check)  # privacy_tweaks
 
     def toggle_background_speech_synthesis(self):
-        self._generic_toggle("background_speech_synthesis", self.system_tweaks.toggle_background_speech_synthesis, self.system_tweaks.toggle_background_speech_synthesis)  # privacy_tweaks
+        self._generic_toggle("background_speech_synthesis", self.system_tweaks.toggle_background_speech_synthesis,
+                             self.system_tweaks.toggle_background_speech_synthesis)  # privacy_tweaks
 
     def toggle_system_monitoring(self):
-        self._generic_toggle("system_monitoring", self.system_tweaks.toggle_system_monitoring, self.system_tweaks.toggle_system_monitoring)
+        self._generic_toggle("system_monitoring", self.system_tweaks.toggle_system_monitoring,
+                             self.system_tweaks.toggle_system_monitoring)
 
     def toggle_remote_pc_experiments(self):
-        self._generic_toggle("remote_pc_experiments", self.system_tweaks.toggle_remote_pc_experiments, self.system_tweaks.toggle_remote_pc_experiments)  # privacy_tweaks
+        self._generic_toggle("remote_pc_experiments", self.system_tweaks.toggle_remote_pc_experiments,
+                             self.system_tweaks.toggle_remote_pc_experiments)  # privacy_tweaks
 
     def toggle_microsoft_spy_modules(self):
-        self._generic_toggle("microsoft_spy_modules", self.system_tweaks.toggle_microsoft_spy_modules, self.system_tweaks.toggle_microsoft_spy_modules)  # privacy_tweaks
+        self._generic_toggle("microsoft_spy_modules", self.system_tweaks.toggle_microsoft_spy_modules,
+                             self.system_tweaks.toggle_microsoft_spy_modules)  # privacy_tweaks
 
     def toggle_windows_event_logging(self):
-        self._generic_toggle("windows_event_logging", self.system_tweaks.toggle_windows_event_logging, self.system_tweaks.toggle_windows_event_logging)
+        self._generic_toggle("windows_event_logging", self.system_tweaks.toggle_windows_event_logging,
+                             self.system_tweaks.toggle_windows_event_logging)
 
     def toggle_app_start_tracking(self):
-        self._generic_toggle("app_start_tracking", self.system_tweaks.toggle_app_start_tracking, self.system_tweaks.toggle_app_start_tracking)  # privacy_tweaks
+        self._generic_toggle("app_start_tracking", self.system_tweaks.toggle_app_start_tracking,
+                             self.system_tweaks.toggle_app_start_tracking)  # privacy_tweaks
 
     def toggle_app_settings_sync(self):
-        self._generic_toggle("app_settings_sync", self.system_tweaks.toggle_app_settings_sync, self.system_tweaks.toggle_app_settings_sync)  # privacy_tweaks
+        self._generic_toggle("app_settings_sync", self.system_tweaks.toggle_app_settings_sync,
+                             self.system_tweaks.toggle_app_settings_sync)  # privacy_tweaks
 
     def toggle_explorer_blur(self):
-        self._generic_toggle("explorer_blur", self.system_tweaks.toggle_explorer_blur, self.system_tweaks.toggle_explorer_blur)
+        self._generic_toggle("explorer_blur", self.system_tweaks.toggle_explorer_blur,
+                             self.system_tweaks.toggle_explorer_blur)
 
     def toggle_show_file_extensions(self):
-        self._generic_toggle("show_file_extensions", self.system_tweaks.toggle_show_file_extensions, self.system_tweaks.toggle_show_file_extensions)
+        self._generic_toggle("show_file_extensions", self.system_tweaks.toggle_show_file_extensions,
+                             self.system_tweaks.toggle_show_file_extensions)
 
     def toggle_gallery_explorer(self):
-        self._generic_toggle("gallery_explorer", self.system_tweaks.toggle_gallery_explorer, self.system_tweaks.toggle_gallery_explorer)
+        self._generic_toggle("gallery_explorer", self.system_tweaks.toggle_gallery_explorer,
+                             self.system_tweaks.toggle_gallery_explorer)
 
     def toggle_home_explorer(self):
-        self._generic_toggle("home_explorer", self.system_tweaks.toggle_home_explorer, self.system_tweaks.toggle_home_explorer)
+        self._generic_toggle("home_explorer", self.system_tweaks.toggle_home_explorer,
+                             self.system_tweaks.toggle_home_explorer)
 
     def toggle_network_explorer(self):
-        self._generic_toggle("network_explorer", self.system_tweaks.toggle_network_explorer, self.system_tweaks.toggle_network_explorer)
+        self._generic_toggle("network_explorer", self.system_tweaks.toggle_network_explorer,
+                             self.system_tweaks.toggle_network_explorer)
 
     def toggle_taskbar_date(self):
-        self._generic_toggle("taskbar_date", self.system_tweaks.toggle_taskbar_date, self.system_tweaks.toggle_taskbar_date)
+        self._generic_toggle("taskbar_date", self.system_tweaks.toggle_taskbar_date,
+                             self.system_tweaks.toggle_taskbar_date)
 
     def toggle_icon_arrow_on_shortcut(self):
-        self._generic_toggle("icon_arrow_on_shortcut", self.system_tweaks.toggle_icon_arrow_on_shortcut, self.system_tweaks.toggle_icon_arrow_on_shortcut)
+        self._generic_toggle("icon_arrow_on_shortcut", self.system_tweaks.toggle_icon_arrow_on_shortcut,
+                             self.system_tweaks.toggle_icon_arrow_on_shortcut)
 
     # Службы
     def toggle_service_pcasvc(self):
-        self._generic_toggle("service_pcasvc", self.system_tweaks.toggle_service_pcasvc, self.system_tweaks.toggle_service_pcasvc)
+        self._generic_toggle("service_pcasvc", self.system_tweaks.toggle_service_pcasvc,
+                             self.system_tweaks.toggle_service_pcasvc)
 
     def toggle_service_wecsvc(self):
-        self._generic_toggle("service_wecsvc", self.system_tweaks.toggle_service_wecsvc, self.system_tweaks.toggle_service_wecsvc)
+        self._generic_toggle("service_wecsvc", self.system_tweaks.toggle_service_wecsvc,
+                             self.system_tweaks.toggle_service_wecsvc)
 
     def toggle_service_wbiosrvc(self):
-        self._generic_toggle("service_wbiosrvc", self.system_tweaks.toggle_service_wbiosrvc, self.system_tweaks.toggle_service_wbiosrvc)
+        self._generic_toggle("service_wbiosrvc", self.system_tweaks.toggle_service_wbiosrvc,
+                             self.system_tweaks.toggle_service_wbiosrvc)
 
     def toggle_service_stisvc(self):
-        self._generic_toggle("service_stisvc", self.system_tweaks.toggle_service_stisvc, self.system_tweaks.toggle_service_stisvc)
+        self._generic_toggle("service_stisvc", self.system_tweaks.toggle_service_stisvc,
+                             self.system_tweaks.toggle_service_stisvc)
 
     def toggle_service_wsearch(self):
-        self._generic_toggle("service_wsearch", self.system_tweaks.toggle_service_wsearch, self.system_tweaks.toggle_service_wsearch)
+        self._generic_toggle("service_wsearch", self.system_tweaks.toggle_service_wsearch,
+                             self.system_tweaks.toggle_service_wsearch)
 
     def toggle_service_mapsbroker(self):
-        self._generic_toggle("service_mapsbroker", self.system_tweaks.toggle_service_mapsbroker, self.system_tweaks.toggle_service_mapsbroker)
+        self._generic_toggle("service_mapsbroker", self.system_tweaks.toggle_service_mapsbroker,
+                             self.system_tweaks.toggle_service_mapsbroker)
 
     def toggle_service_sensorservice(self):
-        self._generic_toggle("service_sensorservice", self.system_tweaks.toggle_service_sensorservice, self.system_tweaks.toggle_service_sensorservice)
+        self._generic_toggle("service_sensorservice", self.system_tweaks.toggle_service_sensorservice,
+                             self.system_tweaks.toggle_service_sensorservice)
 
     def toggle_service_hyperv(self):
-        self._generic_toggle("service_hyperv", self.system_tweaks.toggle_service_hyperv, self.system_tweaks.toggle_service_hyperv)
+        self._generic_toggle("service_hyperv", self.system_tweaks.toggle_service_hyperv,
+                             self.system_tweaks.toggle_service_hyperv)
 
     def toggle_service_xblgamesave(self):
-        self._generic_toggle("service_xblgamesave", self.system_tweaks.toggle_service_xblgamesave, self.system_tweaks.toggle_service_xblgamesave)
+        self._generic_toggle("service_xblgamesave", self.system_tweaks.toggle_service_xblgamesave,
+                             self.system_tweaks.toggle_service_xblgamesave)
 
     def toggle_services_printer(self):
-        self._generic_toggle("printer_services", self.system_tweaks.toggle_service_printer, self.system_tweaks.toggle_service_printer)
+        self._generic_toggle("printer_services", self.system_tweaks.toggle_service_printer,
+                             self.system_tweaks.toggle_service_printer)
 
     def toggle_service_sysmain(self):
-        self._generic_toggle("service_sysmain", self.system_tweaks.toggle_service_sysmain, self.system_tweaks.toggle_service_sysmain)
+        self._generic_toggle("service_sysmain", self.system_tweaks.toggle_service_sysmain,
+                             self.system_tweaks.toggle_service_sysmain)
 
     def toggle_service_wisvc(self):
-        self._generic_toggle("service_wisvc", self.system_tweaks.toggle_service_wisvc, self.system_tweaks.toggle_service_wisvc)
+        self._generic_toggle("service_wisvc", self.system_tweaks.toggle_service_wisvc,
+                             self.system_tweaks.toggle_service_wisvc)
 
     def toggle_service_diagnostics(self):
-        self._generic_toggle("service_diagnostics", self.system_tweaks.toggle_service_diagnostics, self.system_tweaks.toggle_service_diagnostics)
+        self._generic_toggle("service_diagnostics", self.system_tweaks.toggle_service_diagnostics,
+                             self.system_tweaks.toggle_service_diagnostics)
 
     def _generic_toggle(self, tweak_key, enable_func, disable_func):
         """Handles toggling a tweak with separate enable/disable functions."""
@@ -413,8 +488,11 @@ class TweaksTab:
         if search_term:
             if search_term not in self.search_cache:
                 filtered_tweaks = {key: data for key, data in self.tweaks.items()
-                                  if search_term.lower() in (data["instance"].metadata.title.lower() if data["instance"] else key.replace("_", " ").lower())
-                                  or search_term.lower() in (data["instance"].metadata.description.lower() if data["instance"] else "Нет описания.")}
+                                   if search_term.lower() in (
+                                       data["instance"].metadata.title.lower() if data["instance"] else key.replace("_",
+                                                                                                                    " ").lower())
+                                   or search_term.lower() in (data["instance"].metadata.description.lower() if data[
+                        "instance"] else "Нет описания.")}
                 self.search_cache[search_term] = filtered_tweaks
             else:
                 filtered_tweaks = self.search_cache[search_term]
@@ -442,12 +520,12 @@ class TweaksTab:
         title_label = ctk.CTkLabel(text_frame, text=title, font=("Roboto", 14, "bold"))
         title_label.grid(row=0, column=0, sticky="w")
         desc_label = ctk.CTkLabel(text_frame, text=description, font=("Roboto", 12), justify="left",
-                                    text_color="#7E7E7E", wraplength=500)
+                                  text_color="#7E7E7E", wraplength=500)
         desc_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
         tweak_switch = ctk.CTkSwitch(card, text="", command=tweak_data["toggle_command"], onvalue=1, offvalue=0,
-                                    font=("Roboto", 12), progress_color=self.accent_color,
-                                    button_color=("white", "white"))
+                                     font=("Roboto", 12), progress_color=self.accent_color,
+                                     button_color=("white", "white"))
         tweak_switch.pack(side="right", padx=10, pady=10)
         tweak_switch.tweak_key = tweak_key
         tweak_data["switch_ref"] = tweak_switch
@@ -496,9 +574,20 @@ class TweaksTab:
         self.current_category = category
         self.setup_tweaks_page(category)
 
+        self.search_debounce_timer = None
+
     def search_tweaks(self, event):
         search_term = self.search_entry.get()
         self.update_search_entry_border_color(searching=bool(search_term))
+
+        if self.search_debounce_timer:
+            self.parent.after_cancel(self.search_debounce_timer) # Отменяем предыдущий таймер
+
+        self.search_debounce_timer = self.parent.after(400, self._perform_search, search_term) # Запускаем новый таймер
+
+    def _perform_search(self, search_term):
+        self.search_debounce_timer = None # Сбрасываем таймер
+
         if search_term:
             self.is_searching = True
             asyncio.run_coroutine_threadsafe(self.setup_tweaks_page_async(search_term=search_term), loop)
@@ -512,6 +601,20 @@ class TweaksTab:
 
     def update_status_manual(self):
         self.update_status(manual=True)
+
+    def analyze_tweaks(self):
+        """Analyze and save current tweak statuses"""
+        analysis = self.analyzer.collect_tweak_statuses(self.tweaks)
+        if self.analyzer.save_analysis(analysis):
+            self.parent.winfo_toplevel().dynamic_status.update_text(
+                "Анализ твиков успешно сохранен в tweak_analysis.json",
+                message_type="success"
+            )
+        else:
+            self.parent.winfo_toplevel().dynamic_status.update_text(
+                "Ошибка при сохранении анализа твиков",
+                message_type="error"
+            )
 
     def update_status(self, manual=False):
         if not self.update_lock.acquire(blocking=False):
@@ -545,15 +648,26 @@ class TweaksTab:
 
     def _schedule_ui_update(self):
         if self.visible:
-            self.parent.after(self.ui_update_interval, self._update_ui_from_cache)
+            asyncio.run_coroutine_threadsafe(self._update_ui_from_cache(),
+                                             loop)  # Запускаем _update_ui_from_cache асинхронно
+            self.parent.after(self.ui_update_interval,
+                              self._schedule_ui_update)  # Планируем следующий запуск _schedule_ui_update
 
-    def _update_ui_from_cache(self):
+    async def _update_ui_from_cache(self):
         if not self.visible:
             return
 
-        for tweak_key in self.tweaks:
-            self._update_switch_status(tweak_key)  # Simplified update
+        async def update_switch_async(tweak_key):  # Вложенная асинхронная функция
+            self._update_switch_status(tweak_key)
+            await asyncio.sleep(0)  # Даем возможность asyncio event loop обрабатывать другие задачи
+
+        async def update_all_switches():
+            tasks = [update_switch_async(tweak_key) for tweak_key in self.tweaks]
+            await asyncio.gather(*tasks)  # Запускаем все обновления параллельно
+
+        asyncio.run_coroutine_threadsafe(update_all_switches(), loop)  # Запускаем асинхронно в основном потоке
         self._schedule_ui_update()
+
 
 if __name__ == "__main__":
     app = ctk.CTk()

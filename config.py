@@ -11,7 +11,7 @@ GITHUB_API_URL = "https://api.github.com"
 GITHUB_DOWNLOAD_FOLDER = "downloads"
 
 # App Ver
-APP_VERSION = "0.0.10"
+APP_VERSION = "0.0.12"
 
 # Registry paths
 REGISTRY_PATHS = {
@@ -41,6 +41,35 @@ PROGRAM_SOURCES = {
     }
 }
 
+DRIVER_DESCRIPTIONS = {
+    "alderlakepch-ssystem.inf": "Драйвер чипсета PCH для Intel Alder Lake, обеспечивающий работу материнской платы.",
+    "alderlakesystem.inf": "Системный драйвер для процессоров Intel Alder Lake, поддерживающий их корректное функционирование.",
+    "heci.inf": "Драйвер Intel Management Engine Interface для связи системы с встроенным контроллером управления.",
+    "hideventfilter.inf": "Драйвер для управления событиями устройств ввода, таких как клавиатура и мышь.",
+    "ialpss2_gpio2_adl.inf": "Драйвер GPIO для Intel Alder Lake, позволяющий управлять портами ввода/вывода.",
+    "xvdd.inf": "Драйвер виртуальных дисков для игр.",
+    "gameflt.inf": "Драйвер фильтрации для оптимизации игр.",
+    "nvhda.inf": "Аудиодрайвер Nvidia для поддержки высококачественного звука.",
+    "nvrtxvad.inf": "Драйвер Nvidia RTX для виртуального аудио."
+}
+
+# Tweaks for optimization calculation and recommendations
+OPTIMIZATION_TWEAKS = [
+    'power_plan',
+    'FsoGameBar',
+    'spectre_meltdown',
+    'nvidia_optimization',
+    'power_throttling',
+    'uwp_background',
+    'notifications',
+    'cortana',
+    'fastboot',
+    'windows_defender',
+    'onedrive',
+    'sticky_keys',
+    'mouse_acceleration',
+]
+
 # --- Tweak Definitions (Refactored) ---
 #  - Use 'class_name' to specify the class (as a string).
 #  - Use 'module' to specify the module (optional, for brevity).
@@ -50,168 +79,196 @@ TWEAKS = [
         'class_name': 'PowerPlanTweak',  # No specific class
         'module':'powerplan',
         'category': "Оптимизация и настройки",
+        'optimized_state': True,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'FsoGameBar',
         'class_name': 'FsoGameBarTweak',
         'module':'fso_gamebar',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'spectre_meltdown',
         'class_name': 'SpectreMeltdownTweak',
         'module': 'spectre_meltdown',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'nvidia_optimization',
         'class_name': 'NvidiaOptimizationTweak',
         'module': 'nvidia_optimization',
         'category': "Оптимизация и настройки",
+        'optimized_state': True,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'hdcp',
         'class_name': 'HdcpTweak',
         'module': 'hdcp',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'power_throttling',
         'class_name': 'PowerThrottlingTweak',
         'module': 'power_throttling',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'uwp_background',
         'class_name': 'UWPBackgroundTweak',
         'module': 'uwp_background',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'notifications',
         'class_name': 'NotificationsTweak',  # Class name as a string
         'module': 'notifications',  # Module name (optional, for brevity)
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'cortana',
         'class_name': 'CortanaTweak',
         'module': 'cortana',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'fastboot',
         'class_name': 'FastBootTweak',
         'module': 'fastboot',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'hibernation',
         'class_name': 'HibernationTweak',
         'module': 'hibernation',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'indexing',
         'class_name': 'IndexingTweak',
         'module': 'indexing',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'windows_defender',
         'class_name': 'WindowsDefenderTweak',
         'module': 'windows_defender',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'onedrive',
         'class_name': 'OneDriveTweak',
         'module': 'onedrive',
         'category': "Оптимизация и настройки",
+        'optimized_state': True,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'wallpaper_compression',
         'class_name': 'WallpaperCompressionTweak',
         'module': 'wallpaper_compression',
         'category': "Кастомизация",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'sticky_keys',
         'class_name': 'StickyKeysTweak',
         'module': 'sticky_keys',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'mouse_acceleration',
         'class_name': 'MouseAccelerationTweak',
         'module': 'mouse_acceleration',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'security_center_notifications',
         'class_name': 'SecurityCenterNotificationsTweak',
         'module': 'security_center_notifications',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'app_start_notify',
         'class_name': 'AppStartNotifyTweak',
         'module': 'app_start_notify',
         'category': "Оптимизация и настройки",  # Или "Безопасность"
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'prioritize_gaming_tasks',
         'class_name': 'PrioritizeGamingTasksTweak',
         'module': 'prioritize_gaming_tasks',
         'category': "Оптимизация и настройки",
+        'optimized_state': True,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'uac',
         'class_name': 'UACTweak',
         'module': 'uac',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'hw_sch_mode',
         'class_name': 'HwSchModeTweak',
         'module': 'hw_sch_mode',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'widgets_uninstall',
         'class_name': 'WidgetsUninstallTweak',
         'module': 'widgets_uninstall',
         'category': "Оптимизация и настройки",
+        'optimized_state': True,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'clipboard_history',
         'class_name': 'ClipboardHistoryTweak',
         'module': 'clipboard_history',
         'category': "Оптимизация и настройки",
+        'optimized_state': True,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'core_isolation',
         'class_name': 'CoreIsolationTweak',
         'module': 'core_isolation',
         'category': "Оптимизация и настройки",
+        'optimized_state': True,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'auto_update_maps',
         'class_name': 'AutoUpdateMapsTweak',
         'module': 'auto_update_maps',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'auto_store_apps',
         'class_name': 'AutoStoreAppsTweak',
         'module': 'auto_store_apps',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'background_task_edge_browser',
         'class_name': 'BackgroundTaskEdgeBrowserTweak',
         'module': 'background_task_edge_browser',
         'category': "Оптимизация и настройки",
+        'optimized_state': False,  # True means enabled is optimized, False means disabled is optimized
     },
     {
         'key': 'win_ad',

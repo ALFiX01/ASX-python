@@ -357,6 +357,25 @@ def update_status(message, message_type="info", duration=3000,
         _status_bar_instance.update_text(message, message_type, duration, animate, immediate, animate_icon)
 
 
+class LoadingInterface(ctk.CTkFrame):
+    """
+    Интерфейс загрузки, который отображается поверх основного окна
+    до завершения инициализации всех вкладок.
+    """
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        # Можно задать цвет фона, соответствующий теме приложения
+        self.configure(fg_color=master.cget("fg_color"))
+        self.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        self.label = ctk.CTkLabel(self, text="Загрузка...", font=("Helvetica", 24))
+        self.label.pack(expand=True)
+
+        self.progressbar = ctk.CTkProgressBar(self, mode="indeterminate")
+        self.progressbar.pack(padx=20, pady=20)
+        self.progressbar.start()
+
+
 class ASXHub(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -371,6 +390,17 @@ class ASXHub(ctk.CTk):
         self.main_container = ctk.CTkFrame(self)
         self.main_container.pack(fill="both", expand=True, padx=10, pady=10)
 
+        # Создаём оверлей загрузки, который перекроет основной интерфейс
+        self.loading_interface = LoadingInterface(self.main_container)
+        self.loading_interface.lift()  # Поднимаем поверх всех виджетов
+        self.update()  # Обновляем окно, чтобы отобразить экран загрузки
+
+        # Инициализация основного интерфейса происходит с небольшой задержкой,
+        # чтобы окно успело отобразить экран загрузки
+        self.after(150, self.initialize_ui)
+
+    def initialize_ui(self):
+        """Метод инициализации вкладок и основного интерфейса."""
         # Создаём TabView для категорий
         self.tabview = ctk.CTkTabview(self.main_container)
         self.tabview.pack(fill="both", expand=True)
@@ -385,25 +415,29 @@ class ASXHub(ctk.CTk):
         self.tab_info = self.tabview.add("Информация")
         self.tab_settings = self.tabview.add("Настройки")
 
-        # Инициализируем содержимое вкладок
-        self.home_tab = HomeCenter(self.tab_home)  # Инициализируем вкладку "Главная"
+        # Инициализируем статусбар в первую очередь
+        default_status = f"ASX Hub v{APP_VERSION} | {'Администратор' if is_admin() else 'Обычный пользователь'}"
+        self.dynamic_status = DynamicStatusBar(self.main_container, default_text=default_status, height=25)
+        self.dynamic_status.pack(fill="x", pady=(6, 0))
+        set_status_bar_instance(self.dynamic_status)
+
+        # Создаем и анализируем твики
         self.tweaks_tab = TweaksTab(self.tab_tweaks)
+        self.tweaks_tab.analyze_tweaks()
+
+        # Инициализируем остальные вкладки
+        self.driver_tab = DriverTab(self.tab_drivers, self.dynamic_status)
+        self.dynamic_status.update_text("Добро пожаловать в ASX Hub!", duration=3000)
+
+        self.home_tab = HomeCenter(self.tab_home)
         self.programs_tab = ProgramsTab(self.tab_programs)
         self.utilities_tab = UtilitiesTab(self.tab_utilities)
         self.settings_tab = SettingsTab(self.tab_settings)
         self.web_resources_tab = WebResourcesTab(self.tab_web)
         self.information_tab = InformationTab(self.tab_info)
 
-        # Важно: Инициализируем статусбар *ДО* создания DriverTab
-        default_status = f"ASX Hub v{APP_VERSION} | {'Администратор' if is_admin() else 'Обычный пользователь'}"
-        self.dynamic_status = DynamicStatusBar(self.main_container, default_text=default_status, height=25)
-        self.dynamic_status.pack(fill="x", pady=(6, 0))
-        set_status_bar_instance(self.dynamic_status)
-
-        # *ПОСЛЕ* создания статусбара передаём его в DriverTab
-        self.driver_tab = DriverTab(self.tab_drivers, self.dynamic_status)
-
-        self.dynamic_status.update_text("Добро пожаловать в ASX Hub!", duration=3000)
+        # После инициализации всего интерфейса скрываем экран загрузки
+        self.loading_interface.destroy()
 
     def load_and_apply_settings(self):
         """Загружает настройки и применяет их, корректно обрабатывая режим 'System'."""

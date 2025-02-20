@@ -4,11 +4,11 @@ from typing import Optional
 
 @dataclass
 class TweakMetadata:
-    def __init__(self, title, description, category, warning=None):  # Добавили warning=None
+    def __init__(self, title, description, category, warning=None, optimized_state=True):
         self.title = title
         self.description = description
         self.category = category
-        self.warning = warning  # Добавили атрибут warning
+        self.warning = warning
 
 class BaseTweak(ABC):
     @property

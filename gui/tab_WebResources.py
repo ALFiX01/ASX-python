@@ -63,8 +63,11 @@ class WebResourcesTab:
                 border_color=("gray80", "gray25") # Light border, consistent with theme
             )
             web_resource_frame.pack(fill="x", padx=10, pady=8)  # Tighter vertical padding, consistent spacing
-            web_resource_frame.bind("<Enter>", lambda event, frame=web_resource_frame: self.on_resource_hover(event, frame))
-            web_resource_frame.bind("<Leave>", lambda event, frame=web_resource_frame: self.on_resource_leave(event, frame))
+
+            # Remove hover bindings from the frame
+            # web_resource_frame.bind("<Enter>", lambda event, frame=web_resource_frame: self.on_resource_hover(event, frame))
+            # web_resource_frame.bind("<Leave>", lambda event, frame=web_resource_frame: self.on_resource_leave(event, frame))
+
 
             # === Content Frame (Inner layout) ===
             content_frame = ctk.CTkFrame(
@@ -118,10 +121,13 @@ class WebResourcesTab:
                 height=32,
                 corner_radius=8,
                 fg_color=self.accent_color,  # Use the accent color
-                hover_color=self.accent_color, # Same color on hover
+                hover_color="#144870",  # Change to a different color on hover
                 font = ("Roboto", 13)
             )
             open_button.pack(side="right", padx=(10, 0))  # Add some left padding
+             # Keep hover effects on the button
+            open_button.bind("<Enter>", lambda e, b=open_button: b.configure(fg_color="#144870"))  # Lighter green on hover
+            open_button.bind("<Leave>", lambda e, b=open_button: b.configure(fg_color=self.accent_color))
 
     def open_web_resource(self, url):
         """Open web resource in default browser"""
@@ -131,13 +137,14 @@ class WebResourcesTab:
         """Show a message dialog"""
         messagebox.showinfo(title="Сообщение", message=message)
 
-    def on_resource_hover(self, event, frame):
-        """Handle mouse hover on resource card"""
-        frame.configure(border_width=2, border_color=("#4285F4", "#4285F4"))  # More distinct hover color (blue)
+    # Remove hover methods for the frame
+    # def on_resource_hover(self, event, frame):
+    #     """Handle mouse hover on resource card"""
+    #     frame.configure(border_width=2, border_color=("#4285F4", "#4285F4"))  # More distinct hover color (blue)
 
-    def on_resource_leave(self, event, frame):
-        """Handle mouse leaving resource card"""
-        frame.configure(border_width=1, border_color=("gray80", "gray25"))  # Back to subtle border
+    # def on_resource_leave(self, event, frame):
+    #     """Handle mouse leaving resource card"""
+    #     frame.configure(border_width=1, border_color=("gray80", "gray25"))  # Back to subtle border
 
 if __name__ == "__main__":
     ctk.set_appearance_mode("system")  # Use system's light/dark mode

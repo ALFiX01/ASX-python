@@ -4,14 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="479b433a-1357-4230-987a-da312f8fd52f" name="Changes" comment="0.0.10">
-      <change afterPath="$PROJECT_DIR$/gui/tab_home.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/generated-icon.png" beforeDir="false" />
+    <list default="true" id="479b433a-1357-4230-987a-da312f8fd52f" name="Changes" comment="0.0.12">
+      <change afterPath="$PROJECT_DIR$/utilities/startup_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/tab_home.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_home.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_tweaks.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_tweaks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/tab_utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_utilities.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/registry_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/registry_handler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/tweaks/onedrive.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/tweaks/onedrive.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/tweaks/windows_defender.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/tweaks/windows_defender.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/file_cleaner.py" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/file_cleaner.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/pc_monitor.py" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/pc_monitor.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,11 +45,12 @@
     &quot;Python.tab_tweaks.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Daniil/ASX&quot;
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Daniil/ASX/utilities&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Daniil\ASX\utilities" />
       <recent name="C:\Users\Daniil\ASX\gui" />
       <recent name="C:\Users\Daniil\ASX\utils\tweaks" />
     </key>
@@ -146,7 +147,23 @@
       <option name="project" value="LOCAL" />
       <updated>1739616193577</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="0.0.11">
+      <option name="closed" value="true" />
+      <created>1739805101121</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1739805101121</updated>
+    </task>
+    <task id="LOCAL-00008" summary="0.0.12">
+      <option name="closed" value="true" />
+      <created>1739822651550</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1739822651550</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -167,6 +184,8 @@
     <MESSAGE value="0.0.08" />
     <MESSAGE value="0.0.09" />
     <MESSAGE value="0.0.10" />
-    <option name="LAST_COMMIT_MESSAGE" value="0.0.10" />
+    <MESSAGE value="0.0.11" />
+    <MESSAGE value="0.0.12" />
+    <option name="LAST_COMMIT_MESSAGE" value="0.0.12" />
   </component>
 </project>

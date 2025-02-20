@@ -10,6 +10,7 @@ import platform
 import sys
 import webbrowser
 import psutil  # Import psutil for system info
+from gui.utils import resource_path
 
 try:
     import GPUtil # Import GPUtil for GPU info
@@ -244,24 +245,6 @@ class InformationTab:
                     cpu_name = lines[1]
             except Exception as e:
                 print(f"Ошибка WMIC для CPU Name: {e}")
-
-        elif os_name == "Linux":
-            try:
-                # Read from /proc/cpuinfo
-                with open("/proc/cpuinfo", "r") as f:
-                    for line in f:
-                        if "model name" in line.lower():
-                            cpu_name = line.split(":")[1].strip()
-                            break
-            except Exception as e:
-                print(f"Ошибка чтения /proc/cpuinfo: {e}")
-
-        elif os_name == "Darwin":  # macOS
-            try:
-                # Use sysctl for macOS
-                cpu_name = os.popen("sysctl -n machdep.cpu.brand_string").read().strip()
-            except Exception as e:
-                print(f"Ошибка sysctl для CPU Name (macOS): {e}")
 
         # Fallback to platform.processor() if still not found
         if cpu_name == "Не удалось определить":

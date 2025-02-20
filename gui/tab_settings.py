@@ -210,7 +210,7 @@ class SettingsTab:
 
         self.ui["theme_label"] = self._create_label(card, "Тема приложения:", font=("Montserrat", 13))
         self.ui["theme_optionmenu"] = self._create_option_menu(
-            card, ["Синяя", "Зеленая", "Темно-синяя"], self.change_theme, font=("Roboto", 13),
+            card, ["Синяя", "Зеленая", "Темно-синяя"], self.change_theme, state="disabled", font=("Roboto", 13),
             text_color=("#f0f0f0")
         )
 
@@ -275,9 +275,9 @@ class SettingsTab:
         )
         self.ui["language_optionmenu"].set(self.settings.get("language", "Русский"))
         # Use accent_color for initial application
-        self.change_theme(theme_map.get(self.settings["theme"], "Синяя"))
+        self.change_theme(theme_map.get(self.settings["theme"], "Синяя"), display_message=False) # Pass display_message=False
 
-    def change_theme(self, new_theme: str):
+    def change_theme(self, new_theme: str, display_message=True): # Added display_message parameter
         """Handles theme changes and updates the accent color in settings."""
         try:
             theme_map = {"Синяя": "blue", "Зеленая": "green", "Темно-синяя": "dark-blue"}
@@ -297,8 +297,8 @@ class SettingsTab:
             # Получаем главное окно
             root = self.parent.winfo_toplevel()
 
-            # Обновляем статус-бар, если он есть
-            if hasattr(root, "dynamic_status"):
+            # Обновляем статус-бар, если он есть и display_message is True
+            if display_message and hasattr(root, "dynamic_status"): # Conditional message display
                 root.dynamic_status.update_text(f"Тема изменена на {new_theme}. Перезапустите ASX Hub для применения темы", message_type="info", duration=2500)
 
             # Меняем цвет акцента и обновляем интерфейс

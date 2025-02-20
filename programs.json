@@ -1,0 +1,74 @@
+[
+    {
+        "name": "Chrome",
+        "description": "Веб-браузер от Google",
+        "filename": "ChromeSetup.exe",
+        "download_url": "https://dl.google.com/chrome/install/latest/chrome_installer.exe",
+        "category_icon_key": "browser_icon.png",
+        "install_check_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    },
+    {
+        "name": "Discord",
+        "description": "Платформа для общения",
+        "filename": "DiscordSetup.exe",
+        "download_url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64",
+        "category_icon_key": "communication_icon.png",
+        "install_check_name": "Discord"
+    },
+    {
+        "name": "Steam",
+        "description": "Игровая платформа",
+        "filename": "SteamSetup.exe",
+        "download_url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe",
+        "category_icon_key": "gaming_icon.png",
+        "install_check_name": "Steam"
+    },
+    {
+        "name": "KMSAuto",
+        "description": "Активатор Windows (ZIP)",
+        "filename": "KMSAuto.zip",
+        "download_url": "https://github.com/ALFiX01/ASX-Hub/releases/download/File/KMSAuto.zip",
+        "category_icon_key": "utility_icon.png",
+        "is_zip": true,
+        "executable_name_in_zip": "KMSAuto Net Portable.exe"
+    },
+    {
+        "name": "Nvidia App",
+        "description": "Nvidia хз",
+        "filename": "NVIDIA_app.exe",
+        "download_url": "https://github.com/ALFiX01/ASX-Hub/releases/download/File/NVIDIA_app.exe",
+        "category_icon_key": "utility_icon.png",
+        "install_check_name": "Приложение NVIDIA"
+    },
+    {
+        "name": "Nvidia Broadcast",
+        "description": "Nvidia Broadcast хз",
+        "filename": "NVIDIA_Broadcast.exe",
+        "download_url": "https://github.com/ALFiX01/ASX-Hub/releases/download/File/NVIDIA_Broadcast.exe",
+        "category_icon_key": "utility_icon.png",
+        "install_check_name": "NVIDIA Broadcast"
+    },
+    {
+       "name": "Adobe Photoshop",
+       "description": "Редактор изображений",
+       "filename": "PhotoshopSetup.exe",
+       "download_url": "https://example.com/photoshop",
+       "category_icon_key": "graphics_icon.png"
+    },
+    {
+       "name": "Paint.net",
+       "description": "Редактор изображений",
+       "filename": "paintnet.exe",
+       "download_url": "https://github.com/ALFiX01/ASX-Hub/releases/download/File/paintnet.exe",
+       "category_icon_key": "graphics_icon.png",
+       "install_check_name": "Paint.NET"
+    },
+    {
+       "name": "Microsoft Office",
+       "description": "Офисный пакет",
+       "filename": "OfficeSetup.exe",
+       "download_url": "https://example.com/office",
+       "category_icon_key": "office_icon.png"
+    }
+
+]
