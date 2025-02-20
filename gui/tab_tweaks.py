@@ -605,16 +605,18 @@ class TweaksTab:
     def analyze_tweaks(self):
         """Analyze and save current tweak statuses"""
         analysis = self.analyzer.collect_tweak_statuses(self.tweaks)
+        window = self.parent.winfo_toplevel()
+
         if self.analyzer.save_analysis(analysis):
-            self.parent.winfo_toplevel().dynamic_status.update_text(
-                "Анализ твиков успешно сохранен в tweak_analysis.json",
-                message_type="success"
-            )
+            if hasattr(window, 'dynamic_status'):
+                window.dynamic_status.update_text(
+                )
         else:
-            self.parent.winfo_toplevel().dynamic_status.update_text(
-                "Ошибка при сохранении анализа твиков",
-                message_type="error"
-            )
+            if hasattr(window, 'dynamic_status'):
+                window.dynamic_status.update_text(
+                    "Ошибка при сохранении анализа твиков",
+                    message_type="error"
+                )
 
     def update_status(self, manual=False):
         if not self.update_lock.acquire(blocking=False):

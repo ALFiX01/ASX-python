@@ -384,30 +384,59 @@ class ASXHub(ctk.CTk):
         self.geometry("1050x800")
         self.minsize(1050, 800)
 
-        self.load_and_apply_settings()  # Загружаем и применяем настройки
+        self.load_and_apply_settings()
 
         # Основной контейнер
         self.main_container = ctk.CTkFrame(self)
         self.main_container.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Создаём оверлей загрузки, который перекроет основной интерфейс
+        # Создаём TabView для категорий (но пока не упаковываем)
+        self.tabview = ctk.CTkTabview(self.main_container)
+
+        # Создаём оверлей загрузки
         self.loading_interface = LoadingInterface(self.main_container)
         self.loading_interface.lift()  # Поднимаем поверх всех виджетов
-        self.update()  # Обновляем окно, чтобы отобразить экран загрузки
 
-        # Инициализация основного интерфейса происходит с небольшой задержкой,
-        # чтобы окно успело отобразить экран загрузки
-        self.after(150, self.initialize_ui)
+        # Создаём статусбар, но пока не упаковываем
+        default_status = f"ASX Hub v{APP_VERSION} | {'Администратор' if is_admin() else 'Обычный пользователь'}"
+        self.dynamic_status = DynamicStatusBar(self.main_container, default_text=default_status, height=25)
 
-    def initialize_ui(self):
-        """Метод инициализации вкладок и основного интерфейса."""
-        # Создаём TabView для категорий
-        self.tabview = ctk.CTkTabview(self.main_container)
-        self.tabview.pack(fill="both", expand=True)
+        # Теперь упаковываем виджеты в правильном порядке
+        self.tabview.pack(fill="both", expand=True, pady=(0, 6))
+        self.dynamic_status.pack(fill="x", side="bottom")
 
-        # Добавляем вкладки
-        self.tab_home = self.tabview.add("Главная")  # Добавляем вкладку "Главная"
+        # Обновляем окно, чтобы отобразить загрузочный экран
+        self.update()
+
+        # Создаём вкладку твиков (нужна для анализа)
         self.tab_tweaks = self.tabview.add("Твики")
+        self.tweaks_tab = TweaksTab(self.tab_tweaks)
+
+        # Устанавливаем глобальный экземпляр статусбара
+        set_status_bar_instance(self.dynamic_status)
+
+        # Запускаем анализ твиков
+        self.after(150, self._run_analysis_and_initialize)
+
+    def _run_analysis_and_initialize(self):
+        """Выполняет анализ твиков и затем инициализирует остальной UI"""
+        try:
+            # Сначала выполняем анализ твиков
+            self.tweaks_tab.analyze_tweaks()
+
+            # После завершения анализа инициализируем остальной UI
+            self._initialize_full_ui()
+
+        finally:
+            # Уничтожаем экран загрузки
+            if hasattr(self, 'loading_interface') and self.loading_interface:
+                self.loading_interface.destroy()
+                self.loading_interface = None
+
+    def _initialize_full_ui(self):
+        """Инициализация полного UI после завершения анализа твиков"""
+        # Добавляем вкладки в правильном порядке
+        self.tab_home = self.tabview.add("Главная")  # Главная вкладка первая
         self.tab_programs = self.tabview.add("Программы")
         self.tab_utilities = self.tabview.add("Утилиты")
         self.tab_drivers = self.tabview.add("Драйвера")
@@ -415,29 +444,21 @@ class ASXHub(ctk.CTk):
         self.tab_info = self.tabview.add("Информация")
         self.tab_settings = self.tabview.add("Настройки")
 
-        # Инициализируем статусбар в первую очередь
-        default_status = f"ASX Hub v{APP_VERSION} | {'Администратор' if is_admin() else 'Обычный пользователь'}"
-        self.dynamic_status = DynamicStatusBar(self.main_container, default_text=default_status, height=25)
-        self.dynamic_status.pack(fill="x", pady=(6, 0))
-        set_status_bar_instance(self.dynamic_status)
-
-        # Создаем и анализируем твики
-        self.tweaks_tab = TweaksTab(self.tab_tweaks)
-        self.tweaks_tab.analyze_tweaks()
-
-        # Инициализируем остальные вкладки
-        self.driver_tab = DriverTab(self.tab_drivers, self.dynamic_status)
-        self.dynamic_status.update_text("Добро пожаловать в ASX Hub!", duration=3000)
-
+        # Инициализируем вкладки
         self.home_tab = HomeCenter(self.tab_home)
+        self.driver_tab = DriverTab(self.tab_drivers, self.dynamic_status)
         self.programs_tab = ProgramsTab(self.tab_programs)
         self.utilities_tab = UtilitiesTab(self.tab_utilities)
         self.settings_tab = SettingsTab(self.tab_settings)
         self.web_resources_tab = WebResourcesTab(self.tab_web)
         self.information_tab = InformationTab(self.tab_info)
 
-        # После инициализации всего интерфейса скрываем экран загрузки
-        self.loading_interface.destroy()
+        # Устанавливаем "Главная" как активную вкладку
+        self.tabview.set("Главная")
+
+        # Обновляем статус
+        self.dynamic_status.update_text("Добро пожаловать в ASX Hub!", duration=3000)
+
 
     def load_and_apply_settings(self):
         """Загружает настройки и применяет их, корректно обрабатывая режим 'System'."""

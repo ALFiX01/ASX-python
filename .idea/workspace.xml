@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="479b433a-1357-4230-987a-da312f8fd52f" name="Changes" comment="0.0.12">
+      <change afterPath="$PROJECT_DIR$/config_performance_settings.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/utilities/startup_manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_home.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_home.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gui/tab_tweaks.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui/tab_tweaks.py" afterDir="false" />

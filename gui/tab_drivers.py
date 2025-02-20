@@ -66,17 +66,17 @@ class DynamicStatusBar(ctk.CTkFrame):
             self._after_id = self.after(duration, lambda: self.update_text(""))
 
 class DriverTab:
-    """Tab for managing drivers."""
-
-    def __init__(self, parent, status_bar):
+    def __init__(self, parent, status_bar, on_drivers_loaded=None):
         self.parent = parent
         self.status_bar = status_bar
+        self.on_drivers_loaded = on_drivers_loaded  # Add callback
         self.drivers = []
         self.outdated_drivers = []
         self.accent_color = settings.get("accent_color", "#1f6aa5")
-        self.driver_descriptions = DRIVER_DESCRIPTIONS  # Load descriptions from config.py
+        self.driver_descriptions = DRIVER_DESCRIPTIONS
         self._setup_ui()
-        self.load_drivers()  # Load drivers on initialization
+        self.load_drivers()
+
 
     def _setup_ui(self):
         """Sets up the user interface for the tab."""
@@ -338,13 +338,11 @@ class DriverTab:
 
     def load_drivers(self):
         """Loads and displays driver information."""
-        self.status_bar.update_text("Получение списка драйверов...", duration=2000)  # Immediate feedback
         output = self.run_pnputil()
         if output:
             self.drivers = self.parse_pnputil_output(output)
             self.outdated_drivers = self.find_outdated_drivers(self.drivers)
             self.save_outdated_drivers_data(len(self.outdated_drivers), []) # Save count to json, not saving drivers for now
-            self.status_bar.update_text("Список драйверов получен.", duration=2000)  # Completion message
         else:
             self.save_outdated_drivers_data(0, []) # Save 0 if loading fails
             self.status_bar.update_text("Не удалось получить список драйверов.", duration=5000)  # Error message
