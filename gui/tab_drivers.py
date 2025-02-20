@@ -22,7 +22,7 @@ from utils.system_tweaks import SystemTweaks  # Keep for future use
 def load_settings(settings_file="settings.json"):
     """Loads settings from a JSON file."""
     try:
-        with open(resource_path(settings_file), "r") as f: # Use resource_path for settings.json as well, for consistency
+        with open(resource_path(settings_file), "r") as f:  # Use resource_path for settings.json as well
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"Error loading settings: {e}. Using default settings.")
@@ -48,7 +48,6 @@ class DynamicStatusBar(ctk.CTkFrame):
     """Status bar widget with text update capability."""
     def __init__(self, parent, default_text="", *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-
         self.label = ctk.CTkLabel(self, text=default_text, anchor="w")
         self.label.pack(side="left", padx=10)
         self.configure(height=25)
@@ -60,7 +59,6 @@ class DynamicStatusBar(ctk.CTkFrame):
         if self._after_id:
             self.after_cancel(self._after_id)
             self._after_id = None
-
         self.label.configure(text=text)
         if duration > 0:
             self._after_id = self.after(duration, lambda: self.update_text(""))
@@ -69,14 +67,15 @@ class DriverTab:
     def __init__(self, parent, status_bar, on_drivers_loaded=None):
         self.parent = parent
         self.status_bar = status_bar
-        self.on_drivers_loaded = on_drivers_loaded  # Add callback
+        self.on_drivers_loaded = on_drivers_loaded  # Optional callback
         self.drivers = []
         self.outdated_drivers = []
         self.accent_color = settings.get("accent_color", "#1f6aa5")
         self.driver_descriptions = DRIVER_DESCRIPTIONS
+        self.search_var = None
+        self.search_entry = None
         self._setup_ui()
         self.load_drivers()
-
 
     def _setup_ui(self):
         """Sets up the user interface for the tab."""
@@ -88,7 +87,7 @@ class DriverTab:
         self.main_frame.grid_columnconfigure(0, weight=1)
         self.main_frame.grid_rowconfigure(0, weight=1)  # Allow for expansion
 
-        #  Content frame
+        # Content frame
         self.content_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.content_frame.grid(row=0, column=0, sticky="nsew")
         self.content_frame.grid_rowconfigure(0, weight=1)
@@ -97,23 +96,19 @@ class DriverTab:
         self._create_content_area()
 
     def _create_content_area(self):
-        """Creates the area to display the driver list."""
+        """Creates the area to display the driver list and control buttons."""
         self.scrollable_content = ctk.CTkScrollableFrame(
             self.content_frame, corner_radius=10, fg_color=("gray85", "gray17")
         )
         self.scrollable_content.grid(row=0, column=0, sticky="nsew", padx=10, pady=5)
         self.scrollable_content.grid_columnconfigure(0, weight=1)
 
-        # Add a refresh button
+        # Refresh button
         self.refresh_button = ctk.CTkButton(
             self.content_frame, text="Обновить", command=self.load_drivers,
             font=("Roboto", 14)
         )
-        self.refresh_button.grid(row=1, column=0, pady=(0, 10))  # Place below scrollable frame
-
-        # Search bar will be created conditionally
-        self.search_var = None
-        self.search_entry = None
+        self.refresh_button.grid(row=1, column=0, pady=(0, 10))  # Below scrollable frame
 
     def get_driver_description(self, original_name):
         """Retrieves the description for a driver based on its original name."""
@@ -196,7 +191,6 @@ class DriverTab:
 
         command = f'pnputil /delete-driver "{published_name}" /uninstall /force'
         self.status_bar.update_text(f"Удаление драйвера: {published_name}...", duration=2000)
-
         try:
             result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
             self.status_bar.update_text(f"Драйвер {published_name} удалён.", duration=3000)
@@ -206,13 +200,13 @@ class DriverTab:
             return False
 
     def confirm_and_delete(self, driver):
-        """Opens a confirmation dialog with "Подтвердить" button before deleting a driver."""
+        """Opens a confirmation dialog before deleting a driver."""
         dialog = ctk.CTkToplevel(self.parent)
         dialog.title("Подтверждение удаления")
         dialog.geometry("400x200")
-        dialog.grab_set() # Make dialog modal
+        dialog.grab_set()  # Modal dialog
 
-        label = ctk.CTkLabel(dialog, text=f"Вы уверены, что хотите удалить драйвер {driver['Original Name']}?", wraplength=350) # Использовать Original Name
+        label = ctk.CTkLabel(dialog, text=f"Вы уверены, что хотите удалить драйвер {driver['Original Name']}?", wraplength=350)
         label.pack(padx=20, pady=20)
 
         def confirm_deletion():
@@ -229,22 +223,71 @@ class DriverTab:
         cancel_button = ctk.CTkButton(dialog, text="Отмена", command=cancel_deletion)
         cancel_button.pack(side="right", padx=20, pady=(0, 20))
 
-        dialog.transient(self.parent) # Set dialog to be on top of the main window
-        dialog.wait_window(dialog) # Wait for dialog to close
+        dialog.transient(self.parent)
+        dialog.wait_window(dialog)
 
-    def display_drivers(self):
-        """Displays driver information in the UI, with descriptions below each driver."""
+    def create_driver_card(self, parent, driver, name_font, button_text, button_width):
+        """Creates and returns a driver card widget."""
+        card_frame = ctk.CTkFrame(parent, corner_radius=10, fg_color=("gray90", "gray20"))
+        card_frame.pack(fill="x", expand=False, padx=5, pady=5)
+        card_frame.grid_columnconfigure(0, weight=1)
+        card_frame.grid_columnconfigure(1, weight=0)
+
+        # Row 1: Driver name and delete button
+        ctk.CTkLabel(card_frame, text=driver.get('Original Name', 'N/A'),
+                     font=name_font, wraplength=300, justify="left", anchor="w") \
+                     .grid(row=0, column=0, sticky="ew", padx=(10, 20), pady=(10, 0))
+        delete_btn = ctk.CTkButton(card_frame, text=button_text,
+                                   command=lambda d=driver: self.confirm_and_delete(d),
+                                   fg_color="#d05858", hover_color="darkred",
+                                   text_color="white", width=button_width)
+        delete_btn.grid(row=0, column=1, sticky="e", padx=10, pady=(10, 0))
+
+        # Row 2: Version and Date
+        version_date_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
+        version_date_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=(10, 20), pady=(0, 0))
+        version_date_frame.grid_columnconfigure(0, weight=1)
+        version_date_frame.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(version_date_frame, text=f"Версия: {driver.get('Driver Version', 'N/A')}",
+                     font=("Consolas", 13), anchor="w") \
+                     .grid(row=0, column=0, sticky="ew", padx=0, pady=0)
+        ctk.CTkLabel(version_date_frame, text=f"Дата: {driver.get('Driver Date', 'N/A')}",
+                     font=("Consolas", 13), anchor="w") \
+                     .grid(row=1, column=0, sticky="ew", padx=0, pady=0)
+
+        # Row 3: Description
+        description = self.get_driver_description(driver.get('Original Name', ''))
+        ctk.CTkLabel(card_frame, text=description,
+                     font=("Roboto", 12), wraplength=700, justify="left", anchor="w",
+                     fg_color=("gray94", "gray25"), corner_radius=6) \
+                     .grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(8, 10))
+        return card_frame
+
+    def display_drivers_list(self, drivers, name_font, button_text, button_width):
+        """Displays a list of driver cards in the scrollable content."""
         for widget in self.scrollable_content.winfo_children():
             widget.destroy()
 
-        if not self.outdated_drivers:
-            label = ctk.CTkLabel(self.scrollable_content, text="Все драйверы актуальны.", font=("Roboto", 16, "bold"))
+        if not drivers:
+            msg = "Все драйверы актуальны." if self.outdated_drivers else "Нет совпадений."
+            label = ctk.CTkLabel(self.scrollable_content, text=msg, font=("Roboto", 16, "bold"))
             label.pack(pady=20)
             return
 
-        # Conditionally create the search bar if there are more than 10 outdated drivers
+        for driver in drivers:
+            self.create_driver_card(self.scrollable_content, driver, name_font, button_text, button_width)
+
+    def filter_drivers(self, *args):
+        """Filters displayed drivers based on the search query."""
+        query = self.search_var.get().lower()
+        filtered_drivers = [drv for drv in self.outdated_drivers if query in drv.get('Original Name', '').lower()]
+        self.display_drivers_list(filtered_drivers, ("Roboto", 12), "Удалить", 80)
+
+    def display_drivers(self):
+        """Determines whether to display all outdated drivers or filtered ones."""
+        # Conditionally create search bar if there are more than 10 outdated drivers
         if len(self.outdated_drivers) > 10:
-            if self.search_var is None:
+            if not self.search_var:
                 self.search_var = tk.StringVar()
                 self.search_var.trace_add("write", self.filter_drivers)
                 self.search_entry = ctk.CTkEntry(
@@ -253,85 +296,20 @@ class DriverTab:
                 self.search_entry.grid(row=2, column=0, pady=(0, 10), sticky="ew")
         elif self.search_entry:
             self.search_entry.grid_forget()
+            self.search_var = None
 
-        label = ctk.CTkLabel(self.scrollable_content, text="Здесь перечислены драйверы, которые ASX Hub считает устаревшими. Их можно удалить, но не факт, что это безопасно.", font=("Segoe UI Semilight Italic", 15), wraplength=850, justify="center")
-        label.pack(pady=(5,5))
-
-        # --- Driver Entries ---
-        for drv in self.outdated_drivers:
-            driver_frame = ctk.CTkFrame(self.scrollable_content, corner_radius=10, fg_color=("gray90", "gray20"))  # Card for each driver
-            driver_frame.pack(fill="x", expand=False, padx=5, pady=5)  # Padding around driver card
-
-            driver_frame.grid_columnconfigure(0, weight=1) # Name column takes all available space
-            driver_frame.grid_columnconfigure(1, weight=0) # Button column fits content
-
-            # --- Row 1: Name and Delete Button ---
-            ctk.CTkLabel(driver_frame, text=drv.get('Original Name', 'N/A'), font=("Segoe UI", 15, "bold"), wraplength=300, justify="left", anchor="w").grid(row=0, column=0, sticky="ew", padx=(10, 20), pady=(10, 0))  # Increased padx, pady
-            delete_button = ctk.CTkButton(driver_frame, text="Удалить Драйвер", command=lambda d=drv: self.confirm_and_delete(d), fg_color="#d05858", hover_color="darkred", text_color="white", width=80, font=("Roboto", 13))  # Increased font for button
-            delete_button.grid(row=0, column=1, sticky="e", padx=10, pady=(10, 0))  # Increased padx, pady
-
-            # --- Row 2: Version and Date ---
-            version_date_frame = ctk.CTkFrame(driver_frame, fg_color="transparent") # Frame to group version and date
-            version_date_frame.grid(row=1, column=0, columnspan=1, sticky="ew", padx=(10, 20), pady=(0, 0))
-            version_date_frame.grid_columnconfigure(0, weight=1) # Version column
-            version_date_frame.grid_columnconfigure(1, weight=1) # Date column
-
-            ctk.CTkLabel(version_date_frame, text=f"Версия: {drv.get('Driver Version', 'N/A')}", font=("Consolas", 13), anchor="w").grid(row=0, column=0, sticky="ew", padx=0, pady=0)  # Increased padx, pady
-            ctk.CTkLabel(version_date_frame, text=f"Дата: {drv.get('Driver Date', 'N/A')}", font=("Consolas", 13), anchor="w").grid(row=1, column=0, sticky="ew", padx=0, pady=0)  # Increased padx, pady
-
-            # --- Row 3: Description ---
-            description = self.get_driver_description(drv.get('Original Name', ''))
-            description_label = ctk.CTkLabel(driver_frame, text=description, font=("Roboto", 12), wraplength=700, justify="left", anchor="w", fg_color=("gray94", "gray25"), corner_radius=6)  # Slightly lighter background for description, increased corner_radius
-            description_label.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(8, 10))  # Increased padx, pady
-
-    def filter_drivers(self, *args):
-        """Filters the displayed drivers based on the search query."""
-        query = self.search_var.get().lower()
-        filtered_drivers = [drv for drv in self.outdated_drivers if query in drv.get('Original Name', '').lower()]
-        self.display_filtered_drivers(filtered_drivers)
-
-    def display_filtered_drivers(self, drivers):
-        """Displays the filtered list of drivers."""
-        for widget in self.scrollable_content.winfo_children():
-            widget.destroy()
-
-        if not drivers:
-            label = ctk.CTkLabel(self.scrollable_content, text="Нет совпадений.", font=("Roboto", 16, "bold"))
-            label.pack(pady=20)
-            return
-
-        # --- Driver Entries ---
-        for drv in drivers:
-            driver_frame = ctk.CTkFrame(self.scrollable_content, corner_radius=10, fg_color=("gray90", "gray20"))  # Card for each driver
-            driver_frame.pack(fill="x", expand=False, padx=5, pady=5)  # Padding around driver card
-
-            driver_frame.grid_columnconfigure(0, weight=1) # Name column takes all available space
-            driver_frame.grid_columnconfigure(1, weight=0) # Button column fits content
-
-            # --- Row 1: Name and Delete Button ---
-            ctk.CTkLabel(driver_frame, text=drv.get('Original Name', 'N/A'), font=("Roboto", 12), wraplength=300, justify="left", anchor="w").grid(row=0, column=0, sticky="ew", padx=(10, 20), pady=(10, 0))  # Increased padx, pady
-            delete_button = ctk.CTkButton(driver_frame, text="Удалить", command=lambda d=drv: self.confirm_and_delete(d), fg_color="#d05858", hover_color="darkred", text_color="white", width=80, font=("Roboto", 12))  # Increased font for button
-            delete_button.grid(row=0, column=1, sticky="e", padx=10, pady=(10, 0))  # Increased padx, pady
-
-            # --- Row 2: Version and Date ---
-            version_date_frame = ctk.CTkFrame(driver_frame, fg_color="transparent") # Frame to group version and date
-            version_date_frame.grid(row=1, column=0, columnspan=1, sticky="ew", padx=(10, 20), pady=(0, 0))
-            version_date_frame.grid_columnconfigure(0, weight=1) # Version column
-            version_date_frame.grid_columnconfigure(1, weight=1) # Date column
-
-            ctk.CTkLabel(version_date_frame, text=f"Версия: {drv.get('Driver Version', 'N/A')}", font=("Roboto", 12), anchor="w").grid(row=0, column=0, sticky="ew", padx=0, pady=0)  # Increased padx, pady
-            ctk.CTkLabel(version_date_frame, text=f"Дата: {drv.get('Driver Date', 'N/A')}", font=("Roboto", 12), anchor="w").grid(row=1, column=0, sticky="ew", padx=0, pady=0)  # Increased padx, pady
-
-            # --- Row 3: Description ---
-            description = self.get_driver_description(drv.get('Original Name', ''))
-            description_label = ctk.CTkLabel(driver_frame, text=description, font=("Roboto", 12), wraplength=700, justify="left", anchor="w", fg_color=("gray94", "gray25"), corner_radius=6)  # Slightly lighter background for description, increased corner_radius
-            description_label.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=(8, 10))  # Increased padx, pady
+        # A brief label explaining the outdated drivers list
+        header = ctk.CTkLabel(self.scrollable_content,
+                              text="Ниже перечислены драйверы, которые ASX Hub считает устаревшими.",
+                              font=("Roboto", 16, "bold"))
+        header.pack(pady=5)
+        self.display_drivers_list(self.outdated_drivers, ("Segoe UI", 15, "bold"), "Удалить Драйвер", 150)
 
     def save_outdated_drivers_data(self, count, drivers, filename="outdated_drivers_data.json"):
         """Saves outdated drivers count and (optionally) drivers to JSON file."""
-        data = {"count": count, "drivers": drivers} # Optionally save drivers list if needed in home tab
+        data = {"count": count, "drivers": drivers}
         try:
-            with open(resource_path(filename), "w") as f: # Use resource_path for saving as well, for consistency
+            with open(resource_path(filename), "w") as f:
                 json.dump(data, f)
         except Exception as e:
             print(f"Error saving outdated drivers data: {e}")
@@ -342,24 +320,22 @@ class DriverTab:
         if output:
             self.drivers = self.parse_pnputil_output(output)
             self.outdated_drivers = self.find_outdated_drivers(self.drivers)
-            self.save_outdated_drivers_data(len(self.outdated_drivers), []) # Save count to json, not saving drivers for now
+            self.save_outdated_drivers_data(len(self.outdated_drivers), [])
         else:
-            self.save_outdated_drivers_data(0, []) # Save 0 if loading fails
-            self.status_bar.update_text("Не удалось получить список драйверов.", duration=5000)  # Error message
+            self.outdated_drivers = []
+            self.save_outdated_drivers_data(0, [])
+            self.status_bar.update_text("Не удалось получить список драйверов.", duration=5000)
         self.display_drivers()
 
 class App(ctk.CTk):
     """Main application window."""
-
     def __init__(self):
         super().__init__()
         self.title("Driver and System Tweaker")
         self.geometry("1050x800")  # Increased width for descriptions
         self.dynamic_status = DynamicStatusBar(self, default_text="")
-
         self.notebook = ctk.CTkTabview(self)
         self.notebook.pack(expand=True, fill="both", padx=10, pady=10)
-
         self.driver_tab_frame = self.notebook.add("Драйверы")
         self.driver_tab = DriverTab(self.driver_tab_frame, self.dynamic_status)
 

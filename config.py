@@ -11,7 +11,7 @@ GITHUB_API_URL = "https://api.github.com"
 GITHUB_DOWNLOAD_FOLDER = "downloads"
 
 # App Ver
-APP_VERSION = "0.0.12"
+APP_VERSION = "0.0.13"
 
 # Registry paths
 REGISTRY_PATHS = {

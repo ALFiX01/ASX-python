@@ -48,53 +48,190 @@ threading.Thread(target=start_asyncio_loop, args=(loop,), daemon=True).start()
 
 class TweaksTab:
     def __init__(self, parent):
+        # Add lazy initialization
         self.parent = parent
-        self.system_tweaks = SystemTweaks()
-        self.current_category = None
+        self.initialized = False
+        self._initialize_basic_components()
+        # Defer full initialization
+        self.parent.after(100, self._initialize_full)
+        # Add cleanup binding
+        self.parent.bind("<Destroy>", self._cleanup)
+
+    def _initialize_basic_components(self):
+        """Initialize only essential components for initial display"""
+        # Basic cache and state variables
+        self.tweak_cards = {}
+        self.status_cache = {}
         self.search_cache = {}
-        self.is_searching = False
-        from utils.tweak_analyzer import TweakAnalyzer
-        self.analyzer = TweakAnalyzer()
-        self.selected_category = None
         self.category_buttons = {}
         self.update_lock = threading.Lock()
         self.visible = True
-        self.tweak_cards = {}  # Store cards by tweak_key: {tweak_key: card_frame}
-        self.status_cache = {}  # Cache tweak status: {tweak_key: (is_enabled, timestamp)}
-        self.ui_update_interval = 5000  # UI update interval (ms)
-        self._schedule_ui_update()  # Start UI updates
+        self.current_category = None
+        self.selected_category = None
+        self.is_searching = False
 
+        # UI update settings
+        self.ui_update_interval = 5000
         self.accent_color = settings.get("accent_color", "#FF5733")
 
+        # Basic UI setup
+        self._setup_grid()
+        self._create_main_frames()
+
+    def _setup_grid(self):
+        """Setup initial grid configuration"""
         self.parent.grid_columnconfigure(0, weight=1)
         self.parent.grid_rowconfigure(0, weight=1)
 
+    def _create_main_frames(self):
+        """Create and setup main UI frames"""
+        # Main frame
         self.main_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
         self.main_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.main_frame.grid_columnconfigure(1, weight=1)
         self.main_frame.grid_rowconfigure(0, weight=1)
 
-        self.sidebar = ctk.CTkFrame(self.main_frame, width=200, corner_radius=10, fg_color=("gray85", "gray17"))
+        # Sidebar
+        self.sidebar = ctk.CTkFrame(self.main_frame, width=200, corner_radius=10,
+                                    fg_color=("gray85", "gray17"))
         self.sidebar.grid(row=0, column=0, sticky="ns", padx=(0, 10), pady=5)
-        self._create_sidebar()
 
+        # Content frame
         self.content_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.content_frame.grid(row=0, column=1, sticky="nsew")
         self.content_frame.grid_rowconfigure(1, weight=1)
-        self._create_search_area()
-        self._create_content_area()
 
-        self.tweaks = {config["key"]: self._create_tweak_data(config) for config in TWEAKS}
+    def _initialize_full(self):
+        """Initialize remaining components after basic UI is shown"""
+        if self.initialized:
+            return
 
-        default_category = "Оптимизация и настройки"
-        if default_category in self.category_buttons:
-            self.select_category(default_category, self.category_buttons[default_category])
-        else:
-            self.show_category(default_category)
+        try:
+            # Initialize system components with progress tracking
+            self._init_progress = 0
+            self._update_init_status("Инициализация системных компонентов...")
 
+            # Initialize system tweaks
+            self.system_tweaks = SystemTweaks()
+            self._init_progress = 20
+
+            # Initialize analyzer with optimized settings
+            from utils.tweak_analyzer import TweakAnalyzer
+            self.analyzer = TweakAnalyzer()
+            # Предварительная загрузка кэша анализатора в фоновом режиме
+            self.parent.after(100, self._preload_analyzer_cache)
+            self._init_progress = 30
+
+            # Create UI components in specific order for better performance
+            self._update_init_status("Создание интерфейса...")
+            self._create_sidebar()
+            self._init_progress = 40
+            self._create_search_area()
+            self._init_progress = 50
+            self._create_content_area()
+            self._init_progress = 60
+
+            # Initialize tweaks with batching
+            self._update_init_status("Инициализация твиков...")
+            self.tweaks = {}
+            self._initialize_tweaks_in_batches()
+            self._init_progress = 80
+
+            # Setup event bindings
+            self._setup_bindings()
+            self._init_progress = 90
+
+            # Set default category
+            default_category = "Оптимизация и настройки"
+            if default_category in self.category_buttons:
+                # Отложенный выбор категории
+                self.parent.after(100, lambda: self.select_category(default_category,
+                                                                    self.category_buttons[default_category]))
+            else:
+                self.parent.after(100, lambda: self.show_category(default_category))
+
+            # Start UI updates in background
+            self.parent.after(200, self._schedule_ui_update)
+
+            self._init_progress = 100
+            self._update_init_status("Инициализация завершена")
+            self.initialized = True
+
+        except Exception as e:
+            print(f"Error during initialization: {e}")
+            self._update_init_status(f"Ошибка инициализации: {str(e)}", error=True)
+
+    def _preload_analyzer_cache(self):
+        """Предварительная загрузка кэша анализатора в фоновом режиме"""
+        try:
+            threading.Thread(
+                target=self.analyzer.load_latest_analysis,
+                daemon=True
+            ).start()
+        except Exception as e:
+            print(f"Error preloading analyzer cache: {e}")
+
+    def _initialize_tweaks_in_batches(self, batch_size=10):
+        """Initialize tweaks in batches for better responsiveness"""
+        from config import TWEAKS
+
+        total_tweaks = len(TWEAKS)
+        processed = 0
+
+        for i in range(0, total_tweaks, batch_size):
+            batch = TWEAKS[i:i + batch_size]
+            batch_tweaks = {
+                config["key"]: self._create_tweak_data(config)
+                for config in batch
+            }
+            self.tweaks.update(batch_tweaks)
+
+            processed += len(batch)
+            progress = (processed / total_tweaks) * 100
+            self._update_init_status(f"Загрузка твиков... {int(progress)}%")
+
+            # Даем интерфейсу время на обновление
+            if i + batch_size < total_tweaks:
+                self.parent.update_idletasks()
+
+    def _update_init_status(self, message, error=False):
+        """Update initialization status"""
+        if hasattr(self.parent, 'dynamic_status'):
+            self.parent.dynamic_status.update_text(
+                message,
+                message_type="error" if error else "info"
+            )
+        print(f"Init ({self._init_progress}%): {message}")
+
+    def _setup_bindings(self):
+        """Setup event bindings"""
         self.parent.bind("<Visibility>", self.on_visibility_change)
         self.parent.bind("<KeyPress-r>", self.on_key_press_r)
-        self.parent.bind("<KeyPress-R>", self.on_key_press_r)  # Case-insensitive
+        self.parent.bind("<KeyPress-R>", self.on_key_press_r)
+
+    def _cleanup(self, event=None):
+        """Clean up resources when tab is destroyed"""
+        # Clear caches
+        self.search_cache.clear()
+        self.status_cache.clear()
+
+        # Clear UI elements
+        for card in self.tweak_cards.values():
+            if card.winfo_exists():
+                card.destroy()
+        self.tweak_cards.clear()
+
+        # Remove references to large objects
+        self.system_tweaks = None
+        self.analyzer = None
+        self.tweaks = None
+
+        # Cancel any pending updates
+        if hasattr(self, 'search_debounce_timer'):
+            self.parent.after_cancel(self.search_debounce_timer)
+
+        # Stop UI updates
+        self.visible = False
 
     def on_key_press_r(self, event):
         if self.visible:
@@ -482,29 +619,32 @@ class TweaksTab:
             self.parent.after(0, switch_ref.select if not initial_state else switch_ref.deselect)
 
     def setup_tweaks_page(self, category, search_term=""):
-        for card in self.tweak_cards.values():
-            card.pack_forget()  # Hide all cards initially
+        # Add batch processing for better performance
+        BATCH_SIZE = 10
+        visible_tweaks = []
 
+        # Get filtered tweaks
         if search_term:
-            if search_term not in self.search_cache:
-                filtered_tweaks = {key: data for key, data in self.tweaks.items()
-                                   if search_term.lower() in (
-                                       data["instance"].metadata.title.lower() if data["instance"] else key.replace("_",
-                                                                                                                    " ").lower())
-                                   or search_term.lower() in (data["instance"].metadata.description.lower() if data[
-                        "instance"] else "Нет описания.")}
-                self.search_cache[search_term] = filtered_tweaks
-            else:
-                filtered_tweaks = self.search_cache[search_term]
+            filtered_tweaks = self._get_filtered_tweaks(search_term)
         else:
             filtered_tweaks = {k: v for k, v in self.tweaks.items() if v["category"] == category}
 
-        for tweak_key, tweak_data in filtered_tweaks.items():
-            if tweak_key not in self.tweak_cards:
-                self.tweak_cards[tweak_key] = self._create_card(tweak_key, tweak_data)
-            self.tweak_cards[tweak_key].pack(fill="x", expand=True, padx=10, pady=8)
-            self._update_card(self.tweak_cards[tweak_key], tweak_key, tweak_data)  # Update card content
-            self._update_switch_status(tweak_key)  # Ensure correct switch status
+        # Hide all cards first
+        for card in self.tweak_cards.values():
+            card.pack_forget()
+
+        # Process tweaks in batches
+        tweaks_items = list(filtered_tweaks.items())
+        for i in range(0, len(tweaks_items), BATCH_SIZE):
+            batch = tweaks_items[i:i + BATCH_SIZE]
+            for tweak_key, tweak_data in batch:
+                if tweak_key not in self.tweak_cards:
+                    self.tweak_cards[tweak_key] = self._create_card(tweak_key, tweak_data)
+                card = self.tweak_cards[tweak_key]
+                card.pack(fill="x", expand=True, padx=10, pady=8)
+                visible_tweaks.append(tweak_key)
+                # Update in next event loop iteration
+                self.parent.after(10, lambda k=tweak_key: self._update_switch_status(k))
 
     def _create_card(self, tweak_key, tweak_data):
         card = ctk.CTkFrame(self.scrollable_content, corner_radius=10, fg_color=("gray90", "gray20"),
@@ -577,13 +717,35 @@ class TweaksTab:
         self.search_debounce_timer = None
 
     def search_tweaks(self, event):
-        search_term = self.search_entry.get()
+        search_term = self.search_entry.get().lower()  # Convert to lowercase once
         self.update_search_entry_border_color(searching=bool(search_term))
 
+        # Cancel previous timer
         if self.search_debounce_timer:
-            self.parent.after_cancel(self.search_debounce_timer) # Отменяем предыдущий таймер
+            self.parent.after_cancel(self.search_debounce_timer)
 
-        self.search_debounce_timer = self.parent.after(400, self._perform_search, search_term) # Запускаем новый таймер
+        # Increase debounce time for better performance
+        DEBOUNCE_TIME = 500  # ms
+        self.search_debounce_timer = self.parent.after(DEBOUNCE_TIME, self._perform_search, search_term)
+
+    def _get_filtered_tweaks(self, search_term):
+        # Cache search results
+        if search_term not in self.search_cache:
+            filtered_tweaks = {}
+            search_term_lower = search_term.lower()
+
+            for key, data in self.tweaks.items():
+                if data["instance"]:
+                    title = data["instance"].metadata.title.lower()
+                    description = data["instance"].metadata.description.lower()
+                    if search_term_lower in title or search_term_lower in description:
+                        filtered_tweaks[key] = data
+                else:
+                    if search_term_lower in key.replace("_", " ").lower():
+                        filtered_tweaks[key] = data
+
+            self.search_cache[search_term] = filtered_tweaks
+        return self.search_cache[search_term]
 
     def _perform_search(self, search_term):
         self.search_debounce_timer = None # Сбрасываем таймер
@@ -608,9 +770,8 @@ class TweaksTab:
         window = self.parent.winfo_toplevel()
 
         if self.analyzer.save_analysis(analysis):
-            if hasattr(window, 'dynamic_status'):
-                window.dynamic_status.update_text(
-                )
+            # Successfully saved without showing a message
+            pass
         else:
             if hasattr(window, 'dynamic_status'):
                 window.dynamic_status.update_text(
@@ -649,26 +810,28 @@ class TweaksTab:
                 self.update_status_manual()
 
     def _schedule_ui_update(self):
-        if self.visible:
-            asyncio.run_coroutine_threadsafe(self._update_ui_from_cache(),
-                                             loop)  # Запускаем _update_ui_from_cache асинхронно
-            self.parent.after(self.ui_update_interval,
-                              self._schedule_ui_update)  # Планируем следующий запуск _schedule_ui_update
-
-    async def _update_ui_from_cache(self):
         if not self.visible:
             return
 
-        async def update_switch_async(tweak_key):  # Вложенная асинхронная функция
-            self._update_switch_status(tweak_key)
-            await asyncio.sleep(0)  # Даем возможность asyncio event loop обрабатывать другие задачи
+        UPDATE_INTERVAL = 10000  # Increase from 5000 to 10000ms
 
-        async def update_all_switches():
-            tasks = [update_switch_async(tweak_key) for tweak_key in self.tweaks]
-            await asyncio.gather(*tasks)  # Запускаем все обновления параллельно
+        async def batch_update():
+            if not self.visible:
+                return
 
-        asyncio.run_coroutine_threadsafe(update_all_switches(), loop)  # Запускаем асинхронно в основном потоке
-        self._schedule_ui_update()
+            BATCH_SIZE = 5
+            tweak_keys = list(self.tweaks.keys())
+
+            for i in range(0, len(tweak_keys), BATCH_SIZE):
+                if not self.visible:
+                    break
+                batch = tweak_keys[i:i + BATCH_SIZE]
+                for tweak_key in batch:
+                    self._update_switch_status(tweak_key)
+                await asyncio.sleep(0.1)  # Small delay between batches
+
+        asyncio.run_coroutine_threadsafe(batch_update(), loop)
+        self.parent.after(UPDATE_INTERVAL, self._schedule_ui_update)
 
 
 if __name__ == "__main__":

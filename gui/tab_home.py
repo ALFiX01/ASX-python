@@ -317,7 +317,6 @@ class HomeCenter:
             print(f"Python Error getting restore point date: {e}")
             return None
 
-
     def load_outdated_drivers_data(self, filename="outdated_drivers_data.json"):
         """Loads outdated drivers data from JSON file."""
         try:
